@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp2.2</TargetFramework>
+        <LangVersion>7.3</LangVersion>
+        <Description>Easy HTTP client with support for serialization, proxies, testing and more </Description>
+        <RepositoryUrl>https://github.com/matteocontrini/PlainHttp</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageTags>http proxy testing serialization</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Flurl" Version="2.8.0" />
+        <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+    </ItemGroup>
+
+</Project>
