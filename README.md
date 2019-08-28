@@ -52,7 +52,7 @@ IHttpResponse response = await request.SendAsync();
 
 if (!response.Succeeded)
 {
-    Console.WriteLine($"Response status code is {response.Message.StatusCode");
+    Console.WriteLine($"Response status code is {response.Message.StatusCode}");
 }
 else
 {
@@ -213,4 +213,6 @@ HttpResponseMessage msg = new HttpResponseMessage()
 };
 
 http.RequestsQueue.Enqueue(msg);
+
+// Then send your requests normally, in the same async context
 ```
