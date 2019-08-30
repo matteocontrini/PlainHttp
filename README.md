@@ -1,4 +1,4 @@
-# PlainHttp [![NuGet](https://img.shields.io/nuget/v/PlainHttp?color=blue)](https://www.nuget.org/packages/PlainHttp) [![License](https://img.shields.io/github/license/matteocontrini/PlainHttp?color=blue)](https://github.com/matteocontrini/PlainHttp/blob/master/LICENSE)
+# PlainHttp [![NuGet](https://img.shields.io/nuget/v/PlainHttp?color=success)](https://www.nuget.org/packages/PlainHttp) [![License](https://img.shields.io/github/license/matteocontrini/PlainHttp?color=success)](https://github.com/matteocontrini/PlainHttp/blob/master/LICENSE)
 
 An easy HTTP client for .NET Core 2.2 with support for serialization, proxies, testing and more
 
