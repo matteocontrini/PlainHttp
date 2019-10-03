@@ -70,7 +70,7 @@ namespace PlainHttp
             );
         }
 
-        private static HttpClient CreateProxiedClient(Uri proxyUrl)
+        protected virtual HttpClient CreateProxiedClient(Uri proxyUrl)
         {
             HttpMessageHandler handler = new SocketsHttpHandler()
             {
@@ -89,7 +89,7 @@ namespace PlainHttp
             return client;
         }
 
-        private static HttpClient CreateClient()
+        protected virtual HttpClient CreateClient()
         {
             HttpMessageHandler handler = new SocketsHttpHandler()
             {

@@ -3,10 +3,11 @@
     <PropertyGroup>
         <TargetFramework>netcoreapp2.2</TargetFramework>
         <LangVersion>7.3</LangVersion>
+        <VersionPrefix>1.0.1</VersionPrefix>
         <Description>Easy HTTP client with support for serialization, proxies, testing and more </Description>
         <RepositoryUrl>https://github.com/matteocontrini/PlainHttp</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <PackageTags>http proxy testing serialization</PackageTags>
+        <PackageTags>http;httpclient;proxy</PackageTags>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
 
