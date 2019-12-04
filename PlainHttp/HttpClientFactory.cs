@@ -72,9 +72,17 @@ namespace PlainHttp
 
         protected virtual HttpClient CreateProxiedClient(Uri proxyUrl)
         {
+            WebProxy proxy = new WebProxy(proxyUrl);
+
+            if (!string.IsNullOrEmpty(proxyUrl.UserInfo))
+            {
+                string[] parts = proxyUrl.UserInfo.Split(':', 2);
+                proxy.Credentials = new NetworkCredential(parts[0], parts[1]);
+            }
+
             HttpMessageHandler handler = new SocketsHttpHandler()
             {
-                Proxy = new WebProxy(proxyUrl),
+                Proxy = proxy,
                 UseProxy = true,
                 PooledConnectionLifetime = TimeSpan.FromMinutes(10),
                 UseCookies = false,
