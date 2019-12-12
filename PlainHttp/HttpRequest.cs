@@ -64,7 +64,7 @@ namespace PlainHttp
         {
             if (testingMode.Value != null)
             {
-                return await MockedResponse();
+                return await MockedResponse().ConfigureAwait(false);
             }
 
             HttpClient client;
@@ -128,11 +128,11 @@ namespace PlainHttp
                 }
 
                 // Send the request
-                responseMessage = await client.SendAsync(requestMessage, cts.Token);
+                responseMessage = await client.SendAsync(requestMessage, cts.Token).ConfigureAwait(false);
 
                 // Wrap the content into an HttpResponse instance,
                 // also reading the body (string or file)
-                return await CreateHttpResponse(responseMessage);
+                return await CreateHttpResponse(responseMessage).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -154,12 +154,12 @@ namespace PlainHttp
 
                 if (this.ResponseEncoding != null)
                 {
-                    byte[] array = await responseMessage.Content.ReadAsByteArrayAsync();
+                    byte[] array = await responseMessage.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
                     body = this.ResponseEncoding.GetString(array);
                 }
                 else
                 {
-                    body = await responseMessage.Content.ReadAsStringAsync();
+                    body = await responseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
                 }
 
                 return new HttpResponse(this, responseMessage, body);
@@ -167,10 +167,10 @@ namespace PlainHttp
             // Copy the response to a file
             else
             {
-                using (Stream stream = await responseMessage.Content.ReadAsStreamAsync())
+                using (Stream stream = await responseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false))
                 using (FileStream fs = new FileStream(this.DownloadFileName, FileMode.Create, FileAccess.Write))
                 {
-                    await stream.CopyToAsync(fs);
+                    await stream.CopyToAsync(fs).ConfigureAwait(false);
                 }
 
                 return new HttpResponse(this, responseMessage);
@@ -182,7 +182,7 @@ namespace PlainHttp
             // Get the testing mode instance for this async context
             HttpResponseMessage message = testingMode.Value.RequestsQueue.Dequeue();
 
-            return await CreateHttpResponse(message);
+            return await CreateHttpResponse(message).ConfigureAwait(false);
         }
 
         private void SerializeToUrlEncoded(HttpRequestMessage requestMessage)
