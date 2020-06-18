@@ -43,6 +43,10 @@ namespace PlainHttp
 
         public Encoding ResponseEncoding { get; set; }
 
+        public HttpCompletionOption HttpCompletionOption { get; set; } = HttpCompletionOption.ResponseContentRead;
+
+        public bool ReadBody { get; set; } = true;
+
         private static AsyncLocal<TestingMode> testingMode
             = new AsyncLocal<TestingMode>();
 
@@ -60,7 +64,7 @@ namespace PlainHttp
             this.Uri = new Uri(url);
         }
 
-        public async Task<HttpResponse> SendAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<IHttpResponse> SendAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             if (testingMode.Value != null)
             {
@@ -128,7 +132,7 @@ namespace PlainHttp
                 }
 
                 // Send the request
-                responseMessage = await client.SendAsync(requestMessage, cts.Token).ConfigureAwait(false);
+                responseMessage = await client.SendAsync(requestMessage, this.HttpCompletionOption, cts.Token).ConfigureAwait(false);
 
                 // Wrap the content into an HttpResponse instance,
                 // also reading the body (string or file)
@@ -145,24 +149,19 @@ namespace PlainHttp
             }
         }
 
-        private async Task<HttpResponse> CreateHttpResponse(HttpResponseMessage responseMessage)
+        private async Task<IHttpResponse> CreateHttpResponse(HttpResponseMessage responseMessage)
         {
-            // No file name, given read the body of the response as string
+            // No file name given, read the body of the response as a string
             if (this.DownloadFileName == null)
             {
-                string body;
+                IHttpResponse response = new HttpResponse(this, responseMessage);
 
-                if (this.ResponseEncoding != null)
+                if (this.ReadBody)
                 {
-                    byte[] array = await responseMessage.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
-                    body = this.ResponseEncoding.GetString(array);
-                }
-                else
-                {
-                    body = await responseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    await response.ReadBody().ConfigureAwait(false);
                 }
 
-                return new HttpResponse(this, responseMessage, body);
+                return response;
             }
             // Copy the response to a file
             else
@@ -177,7 +176,7 @@ namespace PlainHttp
             }
         }
 
-        private async Task<HttpResponse> MockedResponse()
+        private async Task<IHttpResponse> MockedResponse()
         {
             // Get the testing mode instance for this async context
             HttpResponseMessage message = testingMode.Value.RequestsQueue.Dequeue();

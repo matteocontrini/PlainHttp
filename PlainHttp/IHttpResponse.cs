@@ -1,4 +1,5 @@
 ﻿using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace PlainHttp
 {
@@ -10,5 +11,6 @@ namespace PlainHttp
         bool Succeeded { get; }
 
         string GetSingleHeader(string name);
+        Task ReadBody();
     }
 }

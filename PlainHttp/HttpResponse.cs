@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace PlainHttp
 {
@@ -46,6 +47,19 @@ namespace PlainHttp
             else
             {
                 return null;
+            }
+        }
+
+        public async Task ReadBody()
+        {
+            if (this.Request.ResponseEncoding != null)
+            {
+                byte[] array = await Message.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+                this.Body = this.Request.ResponseEncoding.GetString(array);
+            }
+            else
+            {
+                this.Body = await this.Message.Content.ReadAsStringAsync().ConfigureAwait(false);
             }
         }
     }

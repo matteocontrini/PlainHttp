@@ -17,7 +17,9 @@ namespace PlainHttp
         Uri Proxy { get; set; }
         TimeSpan Timeout { get; set; }
         Uri Uri { get; set; }
+        HttpCompletionOption HttpCompletionOption { get; set; }
+        bool ReadBody { get; set; }
 
-        Task<HttpResponse> SendAsync(CancellationToken cancellationToken = default(CancellationToken));
+        Task<IHttpResponse> SendAsync(CancellationToken cancellationToken = default(CancellationToken));
     }
 }
