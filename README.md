@@ -203,7 +203,7 @@ try {
     // This (optional) call will proceed with reading the HTTP response body from the socket
     await response.ReadBody();
     
-	// response.Body is now populated
+    // response.Body is now populated
 }
 finally {
     // IMPORTANT: when using HttpCompletionOption.ResponseHeadersRead you MUST dispose the HttpResponseMessage manually after you've finished
