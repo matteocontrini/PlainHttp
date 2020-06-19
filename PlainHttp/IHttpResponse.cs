@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace PlainHttp
@@ -9,6 +10,7 @@ namespace PlainHttp
         HttpResponseMessage Message { get; set; }
         HttpRequest Request { get; set; }
         bool Succeeded { get; }
+        TimeSpan ElapsedTime { get; set; }
 
         string GetSingleHeader(string name);
         Task ReadBody();

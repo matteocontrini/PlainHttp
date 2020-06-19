@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Text;
@@ -104,7 +105,9 @@ namespace PlainHttp
             {
                 cts.CancelAfter(this.Timeout);
             }
-            
+
+            Stopwatch stopwatch = Stopwatch.StartNew();
+
             try
             {
                 HttpResponseMessage responseMessage;
@@ -135,8 +138,12 @@ namespace PlainHttp
                 responseMessage = await client.SendAsync(requestMessage, this.HttpCompletionOption, cts.Token).ConfigureAwait(false);
 
                 // Wrap the content into an HttpResponse instance,
-                // also reading the body (string or file)
-                return await CreateHttpResponse(responseMessage).ConfigureAwait(false);
+                // also reading the body (string or file), if requested
+                IHttpResponse response = await CreateHttpResponse(responseMessage).ConfigureAwait(false);
+
+                response.ElapsedTime = stopwatch.Elapsed;
+
+                return response;
             }
             catch (Exception ex)
             {
