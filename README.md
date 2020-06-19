@@ -1,6 +1,6 @@
 # PlainHttp [![NuGet](https://img.shields.io/nuget/v/PlainHttp?color=success)](https://www.nuget.org/packages/PlainHttp) [![License](https://img.shields.io/github/license/matteocontrini/PlainHttp?color=success)](https://github.com/matteocontrini/PlainHttp/blob/master/LICENSE)
 
-An easy HTTP client for .NET Core 2.2 with support for serialization, proxies, testing and more
+An **easy HTTP client** for .NET Core 2.2 with support for **serialization, proxies, testing**, and more
 
 ## Features
 
@@ -12,9 +12,10 @@ An easy HTTP client for .NET Core 2.2 with support for serialization, proxies, t
 - (no deserialization support)
 - Download a file to disk
 - Set a response encoding
-- Automatically enabled decompression of GZIP and DEFLATE  responses
+- Option to disable automatic reading of the response body
+- Automatically enabled decompression of GZIP and DEFLATE responses
 - Allows to mock requests for unit testing
-- Heavily used in production by [@botfactoryit](https://github.com/botfactoryit/) to send 1 million requests *per day*
+- Heavily used in production by [@botfactoryit](https://github.com/botfactoryit/) to send 4 million requests *per day*
 
 ## Why .NET Core 2.2
 
@@ -82,7 +83,7 @@ catch (HttpRequestException ex)
 }
 ```
 
-Setting custom headers:
+Setting **custom headers**:
 
 ```c#
 IHttpRequest request = new HttpRequest(url)
@@ -95,7 +96,7 @@ IHttpRequest request = new HttpRequest(url)
 };
 ```
 
-Custom response decoding:
+**Custom response decoding**:
 
 ```c#
 IHttpRequest request = new HttpRequest(url)
@@ -104,7 +105,7 @@ IHttpRequest request = new HttpRequest(url)
 };
 ```
 
-Custom timeout (note that by default there is no timeout):
+**Custom timeout** (note that by default no timeout is set):
 
 ```c#
 IHttpRequest request = new HttpRequest(url)
@@ -113,7 +114,7 @@ IHttpRequest request = new HttpRequest(url)
 };
 ```
 
-`POST` request with URL-encoded payload:
+`POST` request with **URL-encoded payload**:
 
 ```c#
 IHttpRequest request = new HttpRequest(url)
@@ -128,7 +129,7 @@ IHttpRequest request = new HttpRequest(url)
 };
 ```
 
-`POST` request with `JSON` payload:
+`POST` request with **JSON payload**:
 
 ```c#
 IHttpRequest request = new HttpRequest(url)
@@ -143,7 +144,7 @@ IHttpRequest request = new HttpRequest(url)
 };
 ```
 
-`POST` request with `XML` payload:
+`POST` request with **XML payload**:
 
 ```c#
 IHttpRequest request = new HttpRequest(url)
@@ -158,7 +159,7 @@ IHttpRequest request = new HttpRequest(url)
 };
 ```
 
-You can also choose a content type and then pass an already serialized string:
+You can also choose a **content type** and then pass an already serialized string:
 
 ```c#
 IHttpRequest request = new HttpRequest(url)
@@ -169,9 +170,48 @@ IHttpRequest request = new HttpRequest(url)
 };
 ```
 
-There is currently no response deserialization. The body will be automatically converted to string with the encoding specified by the `ResponseEncoding` property.
+There is currently no response deserialization. The **body** will be automatically **converted to a string** with the encoding specified by the `ResponseEncoding` property.
 
-If you specify the `DownloadFileName` property, the response will be saved to file and the response `Body` property will be `null`.
+If you don't want the response to be read into a string, you can change the behavior with the `ReadBody` property:
+
+```csharp
+IHttpRequest request = new HttpRequest(url)
+{
+    Method = HttpMethod.Get,
+    ReadBody = false
+};
+```
+
+Note that even if you set `ReadBody` to `false` the response content will be fully downloaded anyway as part of the `HttpClient` implementation. If you want to avoid that, you can do the following:
+
+```csharp
+IHttpRequest request = new HttpRequest(url)
+{
+    Method = HttpMethod.Get,
+    HttpCompletionOption = System.Net.Http.HttpCompletionOption.ResponseHeadersRead,
+    ReadBody = false
+};
+
+IHttpResponse response = null;
+
+try {
+    // This call returns immediately after reading the response headers
+    response = await request.SendAsync();
+    
+    // response.Body is null here
+    
+    // This (optional) call will proceed with reading the HTTP response body from the socket
+    await response.ReadBody();
+    
+	// response.Body is now populated
+}
+finally {
+    // IMPORTANT: when using HttpCompletionOption.ResponseHeadersRead you MUST dispose the HttpResponseMessage manually after you've finished
+    response?.Message.Dispose();
+}
+```
+
+If you specify the `DownloadFileName` property, the response will be **saved to file** and the response `Body` property will be `null`.
 
 ```c#
 IHttpRequest request = new HttpRequest(url)
@@ -181,7 +221,7 @@ IHttpRequest request = new HttpRequest(url)
 };
 ```
 
-Set a custom proxy per request (make sure you're aware of the pitfalls mentioned above):
+You can set a **custom proxy per request** (make sure you're aware of the pitfalls mentioned above):
 
 ```c#
 IHttpRequest request = new HttpRequest(url)
@@ -190,7 +230,7 @@ IHttpRequest request = new HttpRequest(url)
 };
 ```
 
-This library wraps the `Flurl` URL builder that provides some utilities that are used internally. You can anyway use `Flurl` to build URLs in an easier way:
+This library wraps the `Flurl` URL builder that provides some utilities that are used internally. You can however also use `Flurl` to build URLs in an easier way (thanks Todd Menier!):
 
 ```c#
 string url = "http://random.org"
@@ -198,7 +238,7 @@ string url = "http://random.org"
     .SetQueryParam("timestamp", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
 ```
 
-Unit testing HTTP requests is easy with PlainHttp. You can enqueue HTTP responses that will be dequeued in sequence. This mechanism is "async safe": the `TestingMode` property is static but wrapped in to an `AsyncLocal` instance, so that you can run your tests in parallel.
+**Unit testing HTTP requests** is easy with PlainHttp. You can enqueue HTTP responses that will be dequeued in sequence. This mechanism is "async safe": the `TestingMode` property is static but wrapped in to an `AsyncLocal` instance, so that you can run your tests in parallel.
 
 ```c#
 // Run this once
@@ -216,3 +256,4 @@ http.RequestsQueue.Enqueue(msg);
 
 // Then send your requests normally, in the same async context
 ```
+
