@@ -60,7 +60,7 @@ namespace PlainHttp
         private HttpClient ProxiedClientFromCache(Uri proxyUri)
         {
             return this.clients.AddOrUpdate(
-                key: proxyUri.Host,
+                key: proxyUri.ToString(),
                 addValueFactory: u => {
                     return CreateProxiedClient(proxyUri);
                 },
