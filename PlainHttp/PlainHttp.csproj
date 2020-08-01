@@ -9,6 +9,7 @@
         <RepositoryType>git</RepositoryType>
         <PackageTags>http;httpclient;proxy</PackageTags>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/matteocontrini/PlainHttp</PackageProjectUrl>
     </PropertyGroup>
 
     <ItemGroup>
