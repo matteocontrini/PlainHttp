@@ -13,8 +13,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Flurl" Version="2.8.0" />
-        <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+        <PackageReference Include="Flurl" Version="3.0.0" />
+        <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     </ItemGroup>
 
 </Project>

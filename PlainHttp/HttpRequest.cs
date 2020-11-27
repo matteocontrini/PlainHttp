@@ -196,8 +196,6 @@ namespace PlainHttp
             // Already serialized
             if (this.Payload is string)
             {
-                string serialized = this.Payload.ToString();
-
                 requestMessage.Content = new StringContent(
                     content: this.Payload.ToString(),
                     encoding: Encoding.UTF8,
@@ -208,9 +206,9 @@ namespace PlainHttp
             {
                 var qp = new Flurl.QueryParamCollection();
 
-                foreach (KeyValuePair<string, object> pair in this.Payload.ToKeyValuePairs())
+                foreach ((string key, object value) in this.Payload.ToKeyValuePairs())
                 {
-                    qp.Merge(pair.Key, pair.Value, false, Flurl.NullValueHandling.Ignore);
+                    qp.AddOrReplace(key, value, false, Flurl.NullValueHandling.Ignore);
                 }
 
                 string serialized = qp.ToString(true);
