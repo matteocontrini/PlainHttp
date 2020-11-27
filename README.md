@@ -1,6 +1,6 @@
 # PlainHttp [![NuGet](https://img.shields.io/nuget/v/PlainHttp?color=success)](https://www.nuget.org/packages/PlainHttp) [![License](https://img.shields.io/github/license/matteocontrini/PlainHttp?color=success)](https://github.com/matteocontrini/PlainHttp/blob/master/LICENSE)
 
-An **easy HTTP client** for .NET Core with support for **serialization, proxies, testing**, and more
+An **easy HTTP client** for .NET Core 3.1 (LTS) with support for **serialization, proxies, testing**, and more
 
 ## Features
 
@@ -17,9 +17,9 @@ An **easy HTTP client** for .NET Core with support for **serialization, proxies,
 - Allows to mock requests for unit testing
 - Heavily used in production by [@botfactoryit](https://github.com/botfactoryit/) to send 4 million requests *per day*
 
-## Why .NET Core 2.2
+## Why .NET Core 3.1
 
-This library targets .NET Core 2.2 because it requires the `PooledConnectionLifetime` property on `HttpMessageHandler`, introduced in .NET Core 2.2. This makes sure that reusing the same `HttpClient` for a long time doesn't have [unintended consequences](https://github.com/dotnet/corefx/issues/11224) affecting DNS resolution. This library in fact keeps a pool of `HttpClient` instances that are never disposed.
+This library targets .NET Core 3.1 (LTS) because it requires the `PooledConnectionLifetime` property on `HttpMessageHandler`, introduced in .NET Core 2.2. This makes sure that reusing the same `HttpClient` for a long time doesn't have [unintended consequences](https://github.com/dotnet/corefx/issues/11224) affecting DNS resolution. This library in fact keeps a pool of `HttpClient` instances that are never disposed.
 
 In particular, the library keeps:
 
