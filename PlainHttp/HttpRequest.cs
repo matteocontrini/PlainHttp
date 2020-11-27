@@ -246,7 +246,7 @@ namespace PlainHttp
             }
 
             requestMessage.Content = new StringContent(
-                content: this.Payload.ToString(),
+                content: serialized,
                 encoding: Encoding.UTF8,
                 mediaType: "text/xml"
             );
