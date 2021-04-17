@@ -25,7 +25,7 @@ namespace PlainHttp
         public Uri Uri { get; set; }
 
         public static IHttpClientFactory HttpClientFactory { get; set; }
-            = new HttpClientFactory();
+            = new HttpClientFactory(TimeSpan.FromMinutes(10), 1000);
 
         public HttpRequestMessage Message { get; protected set; }
 

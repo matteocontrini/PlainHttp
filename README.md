@@ -13,20 +13,18 @@ An **easy HTTP client** for .NET Core with support for **serialization, proxies,
 - Download a file to disk
 - Set a response encoding
 - Option to disable automatic reading of the response body
-- Automatically enabled decompression of GZIP and DEFLATE responses
+- Automatic decompression of Gzip, Deflate and Brotli responses
 - Allows to mock requests for unit testing
 - Heavily used in production by [@botfactoryit](https://github.com/botfactoryit/) to send 4 million requests *per day*
 
 ## Why .NET Core 3.1
 
-This library targets .NET Core 3.1 (LTS) because it requires the `PooledConnectionLifetime` property on `HttpMessageHandler`, introduced in .NET Core 2.2. This makes sure that reusing the same `HttpClient` for a long time doesn't have [unintended consequences](https://github.com/dotnet/corefx/issues/11224) affecting DNS resolution. This library in fact keeps a pool of `HttpClient` instances that are never disposed.
+This library targets .NET Core 3.1 (LTS) because it requires the `PooledConnectionLifetime` property on `HttpMessageHandler`, introduced in .NET Core 2.2. This makes sure that reusing the same `HttpClient` for a long time doesn't have [unintended consequences](https://github.com/dotnet/corefx/issues/11224) affecting DNS resolution.
 
 In particular, the library keeps:
 
 - One `HttpClient` per request host
 - One `HttpClient` per proxy
-
-There is currently no mechanism that disposes `HttpClient` instances that are unused, so if you use a lot of random proxies or many different hostnames, you might get into trouble. This can be easily improved by creating a custom [`IHttpClientFactory`](https://github.com/matteocontrini/PlainHttp/blob/ba9e51629629fb8fafbf3c8ac7335e5c09c15cfc/PlainHttp/HttpClientFactory.cs), and then passing the factory to each request through the `HttpClientFactory` property.
 
 ## Usage
 
@@ -120,7 +118,7 @@ IHttpRequest request = new HttpRequest(url)
 IHttpRequest request = new HttpRequest(url)
 {
     Method = HttpMethod.Post,
-    ContentType = ContentType.UrlEncoded,
+    PayloadSerializationType = PayloadSerializationType.UrlEncoded,
     Payload = new
     {
         something = "hello",
@@ -135,8 +133,8 @@ IHttpRequest request = new HttpRequest(url)
 IHttpRequest request = new HttpRequest(url)
 {
     Method = HttpMethod.Post,
-    ContentType = ContentType.Json,
-    // you can pass any object, it will be passed to JSON.NET
+    PayloadSerializationType = PayloadSerializationType.Json,
+    // you can pass any object, it will be passed to System.Text.Json
     Payload = new
     {
         something = "web"
@@ -150,7 +148,7 @@ IHttpRequest request = new HttpRequest(url)
 IHttpRequest request = new HttpRequest(url)
 {
     Method = HttpMethod.Post,
-    ContentType = ContentType.Json,
+    PayloadSerializationType = PayloadSerializationType.Json,
     // the object will be passed to System.Xml.Serialization.XmlSerializer
     Payload = new
     {
@@ -165,7 +163,7 @@ You can also choose a **content type** and then pass an already serialized strin
 IHttpRequest request = new HttpRequest(url)
 {
     Method = HttpMethod.Post,
-    ContentType = ContentType.Json,
+    PayloadSerializationType = PayloadSerializationType.Json,
     Payload = "{ \"key\": true }"
 };
 ```
@@ -226,7 +224,10 @@ You can set a **custom proxy per request** (make sure you're aware of the pitfal
 ```c#
 IHttpRequest request = new HttpRequest(url)
 {
-    Proxy = new Uri("http://yyyy.org:3128")
+    Proxy = new WebProxy
+    {
+        Address = new Uri($"http://{proxyHost}:{proxyPort}"),
+    }
 };
 ```
 
