@@ -1,6 +1,6 @@
 ﻿namespace PlainHttp
 {
-    public enum ContentType
+    public enum PayloadSerializationType
     {
         Raw,
         Json,

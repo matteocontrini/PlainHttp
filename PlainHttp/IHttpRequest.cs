@@ -9,7 +9,7 @@ namespace PlainHttp
 {
     public interface IHttpRequest
     {
-        ContentType ContentType { get; set; }
+        PayloadSerializationType PayloadSerializationType { get; set; }
         string DownloadFileName { get; set; }
         Dictionary<string, string> Headers { get; set; }
         HttpRequestMessage Message { get; }

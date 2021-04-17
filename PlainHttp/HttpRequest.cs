@@ -39,7 +39,7 @@ namespace PlainHttp
 
         public object Payload { get; set; }
 
-        public ContentType ContentType { get; set; }
+        public PayloadSerializationType PayloadSerializationType { get; set; }
 
         public string DownloadFileName { get; set; }
 
@@ -124,15 +124,15 @@ namespace PlainHttp
                 // Serialize the payload
                 if (this.Payload != null)
                 {
-                    if (this.ContentType == ContentType.Json)
+                    if (this.PayloadSerializationType == PayloadSerializationType.Json)
                     {
                         SerializeToJson(requestMessage);
                     }
-                    else if (this.ContentType == ContentType.Xml)
+                    else if (this.PayloadSerializationType == PayloadSerializationType.Xml)
                     {
                         SerializeToXml(requestMessage);
                     }
-                    else if (this.ContentType == ContentType.UrlEncoded)
+                    else if (this.PayloadSerializationType == PayloadSerializationType.UrlEncoded)
                     {
                         SerializeToUrlEncoded(requestMessage);
                     }
