@@ -37,57 +37,58 @@ namespace PlainHttp
         /// <summary>
         /// Gets a random cached client with a proxy attached to it
         /// </summary>
-        /// <param name="proxyUri"><see cref="Uri"/> of the proxy, used as the cache key</param>
+        /// <param name="proxy"><see cref="IWebProxy"/> of the proxy, whose hash code is used as the cache key</param>
         /// <returns>A cached <see cref="HttpClient"/> instance with a random proxy. Returns null if no proxies are available</returns>
-        public HttpClient GetProxiedClient(Uri proxyUri)
+        public HttpClient GetProxiedClient(IWebProxy proxy)
         {
-            return ProxiedClientFromCache(proxyUri);
+            return ProxiedClientFromCache(proxy);
         }
 
         private HttpClient PerHostClientFromCache(Uri uri)
         {
             return this.clients.AddOrUpdate(
                 key: uri.Host,
-                addValueFactory: u => {
+                addValueFactory: u =>
+                {
                     return CreateClient();
                 },
-                updateValueFactory: (u, client) => {
+                updateValueFactory: (u, client) =>
+                {
                     return client;
                 }
             );
         }
 
-        private HttpClient ProxiedClientFromCache(Uri proxyUri)
+        private HttpClient ProxiedClientFromCache(IWebProxy proxy)
         {
             return this.clients.AddOrUpdate(
-                key: proxyUri.ToString(),
-                addValueFactory: u => {
-                    return CreateProxiedClient(proxyUri);
+                key: proxy.GetHashCode().ToString(),
+                addValueFactory: u =>
+                {
+                    return CreateProxiedClient(proxy);
                 },
-                updateValueFactory: (u, client) => {
+                updateValueFactory: (u, client) =>
+                {
                     return client;
                 }
             );
         }
 
-        protected virtual HttpClient CreateProxiedClient(Uri proxyUrl)
+        private SocketsHttpHandler GetDefaultHttpMessageHandler()
         {
-            WebProxy proxy = new WebProxy(proxyUrl);
-
-            if (!string.IsNullOrEmpty(proxyUrl.UserInfo))
+            return new SocketsHttpHandler()
             {
-                string[] parts = proxyUrl.UserInfo.Split(':', 2);
-                proxy.Credentials = new NetworkCredential(parts[0], parts[1]);
-            }
-
-            HttpMessageHandler handler = new SocketsHttpHandler()
-            {
-                Proxy = proxy,
-                UseProxy = true,
                 PooledConnectionLifetime = TimeSpan.FromMinutes(10),
                 UseCookies = false,
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate | DecompressionMethods.Brotli
             };
+        }
+
+        protected virtual HttpClient CreateProxiedClient(IWebProxy proxy)
+        {
+            var handler = GetDefaultHttpMessageHandler();
+            handler.Proxy = proxy;
+            handler.UseProxy = true;
 
             HttpClient client = new HttpClient(handler)
             {
@@ -99,14 +100,7 @@ namespace PlainHttp
 
         protected virtual HttpClient CreateClient()
         {
-            HttpMessageHandler handler = new SocketsHttpHandler()
-            {
-                PooledConnectionLifetime = TimeSpan.FromMinutes(10),
-                UseCookies = false,
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
-            };
-
-            HttpClient client = new HttpClient(handler)
+            HttpClient client = new HttpClient(GetDefaultHttpMessageHandler())
             {
                 Timeout = System.Threading.Timeout.InfiniteTimeSpan
             };

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
@@ -34,7 +35,7 @@ namespace PlainHttp
         public Dictionary<string, string> Headers { get; set; }
             = new Dictionary<string, string>();
 
-        public Uri Proxy { get; set; }
+        public IWebProxy Proxy { get; set; }
 
         public object Payload { get; set; }
 
@@ -47,6 +48,8 @@ namespace PlainHttp
         public HttpCompletionOption HttpCompletionOption { get; set; } = HttpCompletionOption.ResponseContentRead;
 
         public bool ReadBody { get; set; } = true;
+
+        public Version HttpVersion { get; set; }
 
         private static AsyncLocal<TestingMode> testingMode
             = new AsyncLocal<TestingMode>();
@@ -104,6 +107,12 @@ namespace PlainHttp
             if (this.Timeout != TimeSpan.Zero)
             {
                 cts.CancelAfter(this.Timeout);
+            }
+
+            // Set the HTTP protocol version to be used
+            if (this.HttpVersion != null)
+            {
+                requestMessage.Version = HttpVersion;
             }
 
             Stopwatch stopwatch = Stopwatch.StartNew();

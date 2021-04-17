@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Net.Http;
 
 namespace PlainHttp
@@ -7,6 +8,6 @@ namespace PlainHttp
     {
         HttpClient GetClient(Uri uri);
 
-        HttpClient GetProxiedClient(Uri proxyUri);
+        HttpClient GetProxiedClient(IWebProxy proxy);
     }
 }

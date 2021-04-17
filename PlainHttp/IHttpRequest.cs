@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,11 +15,12 @@ namespace PlainHttp
         HttpRequestMessage Message { get; }
         HttpMethod Method { get; set; }
         object Payload { get; set; }
-        Uri Proxy { get; set; }
+        IWebProxy Proxy { get; set; }
         TimeSpan Timeout { get; set; }
         Uri Uri { get; set; }
         HttpCompletionOption HttpCompletionOption { get; set; }
         bool ReadBody { get; set; }
+        Version HttpVersion { get; set; }
 
         Task<IHttpResponse> SendAsync(CancellationToken cancellationToken = default(CancellationToken));
     }
