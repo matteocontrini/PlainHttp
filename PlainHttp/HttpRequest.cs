@@ -1,5 +1,4 @@
 ﻿using Flurl.Util;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -7,6 +6,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
@@ -270,7 +270,7 @@ namespace PlainHttp
             }
             else
             {
-                serialized = JsonConvert.SerializeObject(this.Payload);
+                serialized = JsonSerializer.Serialize(this.Payload);
             }
 
             requestMessage.Content = new StringContent(
