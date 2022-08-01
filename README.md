@@ -8,12 +8,12 @@ An **easy HTTP client** for .NET Core with support for **serialization, proxies,
 - Supports any HTTP method
 - Per-request timeout with a custom `HttpRequestTimeoutException`
 - Per-request proxy with transparent pooling
-- Automatic serialization of objects to `JSON`/`XML`/URL encoded
+- Automatic serialization of objects to `JSON`/`XML`/URL-encoded
 - (no deserialization support)
 - Download a file to disk
 - Set a response encoding
 - Option to disable automatic reading of the response body
-- Automatically enabled decompression of GZIP and DEFLATE responses
+- Automatically enabled decompression of responses (all algorithms supported by .NET, i.e. gzip, DEFLATE, and Brotli)
 - Allows to mock requests for unit testing
 - Heavily used in production by [@botfactoryit](https://github.com/botfactoryit/) to send 4 million requests *per day*
 
@@ -81,6 +81,15 @@ catch (HttpRequestException ex)
         // etc.
     }
 }
+```
+
+Request a **specific HTTP version** to be used. If it's not supported, the default [HttpVersionPolicy](https://docs.microsoft.com/en-us/dotnet/api/system.net.http.httpversionpolicy) applies (downgrade to a lower version).
+
+```csharp
+IHttpRequest request = new HttpRequest(url)
+{
+    Version = new Version(2, 0) // HTTP/2
+};
 ```
 
 Setting **custom headers**:
