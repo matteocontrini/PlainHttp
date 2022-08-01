@@ -23,6 +23,8 @@ namespace PlainHttp
 
         public Uri Uri { get; set; }
 
+        public Version HttpVersion { get; set; }
+
         public static IHttpClientFactory HttpClientFactory { get; set; }
             = new HttpClientFactory();
 
@@ -65,7 +67,7 @@ namespace PlainHttp
             this.Uri = new Uri(url);
         }
 
-        public async Task<IHttpResponse> SendAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<IHttpResponse> SendAsync(CancellationToken cancellationToken = default)
         {
             if (testingMode.Value != null)
             {
@@ -93,6 +95,11 @@ namespace PlainHttp
             foreach (string headerName in this.Headers.Keys)
             {
                 requestMessage.Headers.TryAddWithoutValidation(headerName, this.Headers[headerName]);
+            }
+
+            if (this.HttpVersion != null)
+            {
+                requestMessage.Version = this.HttpVersion;
             }
 
             // Save the HttpRequestMessage
