@@ -86,7 +86,7 @@ namespace PlainHttp
                 UseProxy = true,
                 PooledConnectionLifetime = TimeSpan.FromMinutes(10),
                 UseCookies = false,
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+                AutomaticDecompression = DecompressionMethods.All
             };
 
             HttpClient client = new HttpClient(handler)
@@ -103,7 +103,7 @@ namespace PlainHttp
             {
                 PooledConnectionLifetime = TimeSpan.FromMinutes(10),
                 UseCookies = false,
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+                AutomaticDecompression = DecompressionMethods.All
             };
 
             HttpClient client = new HttpClient(handler)
