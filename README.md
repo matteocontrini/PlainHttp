@@ -26,7 +26,7 @@ In particular, the library keeps:
 - One `HttpClient` per request host
 - One `HttpClient` per proxy
 
-There is currently no mechanism that disposes `HttpClient` instances that are unused, so if you use a lot of random proxies or many different hostnames, you might get into trouble. This can be easily improved by creating a custom [`IHttpClientFactory`](https://github.com/matteocontrini/PlainHttp/blob/ba9e51629629fb8fafbf3c8ac7335e5c09c15cfc/PlainHttp/HttpClientFactory.cs), and then passing the factory to each request through the `HttpClientFactory` property.
+There is currently no mechanism that disposes `HttpClient` instances that are unused, so if you use a lot of random proxies or many different hostnames, you might get into trouble. This can be easily improved by creating a custom [`IHttpClientFactory`](https://github.com/matteocontrini/PlainHttp/blob/master/PlainHttp/HttpClientFactory.cs), and then passing the factory to each request through the `HttpClientFactory` property.
 
 ## Usage
 
