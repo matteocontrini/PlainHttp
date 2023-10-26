@@ -1,10 +1,9 @@
-﻿namespace PlainHttp
+﻿namespace PlainHttp;
+
+public enum ContentType
 {
-    public enum ContentType
-    {
-        Raw,
-        Json,
-        Xml,
-        UrlEncoded
-    }
+    Raw,
+    Json,
+    Xml,
+    UrlEncoded
 }
