@@ -14,26 +14,22 @@ public class HttpClientFactory : IHttpClientFactory
     private readonly ConcurrentDictionary<string, HttpClient> clients = new();
 
     /// <summary>
-    /// Gets a cached client for the host associated to the input URL
+    /// Gets a cached client for the host associated to the provided request URI.
     /// </summary>
-    /// <param name="uri"><see cref="Uri"/> used as the cache key</param>
+    /// <param name="requestUri">Request <see cref="Uri"/> used as the cache key</param>
     /// <returns>A cached <see cref="HttpClient"/> instance for the host</returns>
-    public HttpClient GetClient(Uri uri)
+    public HttpClient GetClient(Uri requestUri)
     {
-        if (uri == null)
-        {
-            throw new ArgumentNullException(nameof(uri));
-        }
-
-        return PerHostClientFromCache(uri);
+        return PerHostClientFromCache(requestUri);
     }
 
     /// <summary>
-    /// Gets a random cached client with a proxy attached to it
+    /// Gets a cached client with the given proxy attached to it.
     /// </summary>
+    /// <param name="uri">Request <see cref="Uri"/></param>
     /// <param name="proxyUri"><see cref="Uri"/> of the proxy, used as the cache key</param>
-    /// <returns>A cached <see cref="HttpClient"/> instance with a random proxy. Returns null if no proxies are available</returns>
-    public HttpClient GetProxiedClient(Uri proxyUri)
+    /// <returns>A cached <see cref="HttpClient"/> instance with the proxy configured</returns>
+    public HttpClient GetProxiedClient(Uri uri, Uri proxyUri)
     {
         return ProxiedClientFromCache(proxyUri);
     }
@@ -43,7 +39,8 @@ public class HttpClientFactory : IHttpClientFactory
         return this.clients.AddOrUpdate(
             key: uri.Host,
             addValueFactory: u => CreateClient(),
-            updateValueFactory: (u, client) => client);
+            updateValueFactory: (u, client) => client
+        );
     }
 
     private HttpClient ProxiedClientFromCache(Uri proxyUri)
@@ -51,7 +48,8 @@ public class HttpClientFactory : IHttpClientFactory
         return this.clients.AddOrUpdate(
             key: proxyUri.ToString(),
             addValueFactory: u => CreateProxiedClient(proxyUri),
-            updateValueFactory: (u, client) => client);
+            updateValueFactory: (u, client) => client
+        );
     }
 
     protected virtual HttpClient CreateProxiedClient(Uri proxyUrl)

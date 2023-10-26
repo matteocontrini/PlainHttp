@@ -2,7 +2,7 @@
 
 public interface IHttpClientFactory
 {
-    HttpClient GetClient(Uri uri);
+    HttpClient GetClient(Uri requestUri);
 
-    HttpClient GetProxiedClient(Uri proxyUri);
+    HttpClient GetProxiedClient(Uri requestUri, Uri proxyUri);
 }

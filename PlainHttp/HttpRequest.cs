@@ -57,7 +57,7 @@ public class HttpRequest : IHttpRequest
         }
 
         HttpClient client = this.Proxy != null
-            ? HttpClientFactory.GetProxiedClient(this.Proxy)
+            ? HttpClientFactory.GetProxiedClient(this.Uri, this.Proxy)
             : HttpClientFactory.GetClient(this.Uri);
 
         HttpRequestMessage requestMessage = new HttpRequestMessage
