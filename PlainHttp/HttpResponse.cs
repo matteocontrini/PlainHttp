@@ -16,10 +16,7 @@ public class HttpResponse : IHttpResponse, IDisposable
 
     public bool Succeeded
     {
-        get
-        {
-            return this.Message.IsSuccessStatusCode;
-        }
+        get { return this.Message.IsSuccessStatusCode; }
     }
 
     public TimeSpan ElapsedTime { get; set; }
@@ -67,7 +64,7 @@ public class HttpResponse : IHttpResponse, IDisposable
         {
             // Start a stopwatch to measure how long the read will last
             stopwatch = Stopwatch.StartNew();
-                
+
             if (this.Request.Timeout != default)
             {
                 // Calculate how much time we have left

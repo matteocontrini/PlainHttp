@@ -21,16 +21,14 @@ public class HttpRequest : IHttpRequest
 
     public Version HttpVersion { get; set; }
 
-    public static IHttpClientFactory HttpClientFactory { get; set; }
-        = new HttpClientFactory();
+    public static IHttpClientFactory HttpClientFactory { get; set; } = new HttpClientFactory();
 
     public HttpRequestMessage Message { get; protected set; }
 
     public TimeSpan Timeout { get; set; }
         = TimeSpan.Zero;
 
-    public Dictionary<string, string> Headers { get; set; }
-        = new Dictionary<string, string>();
+    public Dictionary<string, string> Headers { get; set; } = new();
 
     public Uri Proxy { get; set; }
 
@@ -46,8 +44,7 @@ public class HttpRequest : IHttpRequest
 
     public bool ReadBody { get; set; } = true;
 
-    private static AsyncLocal<TestingMode> testingMode
-        = new AsyncLocal<TestingMode>();
+    private static AsyncLocal<TestingMode> testingMode = new();
 
     public HttpRequest()
     {
@@ -70,16 +67,9 @@ public class HttpRequest : IHttpRequest
             return await MockedResponse().ConfigureAwait(false);
         }
 
-        HttpClient client;
-
-        if (this.Proxy != null)
-        {
-            client = HttpClientFactory.GetProxiedClient(this.Proxy);
-        }
-        else
-        {
-            client = HttpClientFactory.GetClient(this.Uri);
-        }
+        HttpClient client = this.Proxy != null
+            ? HttpClientFactory.GetProxiedClient(this.Proxy)
+            : HttpClientFactory.GetClient(this.Uri);
 
         HttpRequestMessage requestMessage = new HttpRequestMessage
         {
@@ -113,8 +103,6 @@ public class HttpRequest : IHttpRequest
 
         try
         {
-            HttpResponseMessage responseMessage;
-
             // Serialize the payload
             if (this.Payload != null)
             {
@@ -138,7 +126,9 @@ public class HttpRequest : IHttpRequest
             }
 
             // Send the request
-            responseMessage = await client.SendAsync(requestMessage, this.HttpCompletionOption, cts.Token).ConfigureAwait(false);
+            HttpResponseMessage responseMessage = await client
+                .SendAsync(requestMessage, this.HttpCompletionOption, cts.Token)
+                .ConfigureAwait(false);
 
             // Wrap the content into an HttpResponse instance,
             // also reading the body (string or file), if requested

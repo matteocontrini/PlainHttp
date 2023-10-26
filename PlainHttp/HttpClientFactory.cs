@@ -13,11 +13,7 @@ namespace PlainHttp;
 /// </summary>
 public class HttpClientFactory : IHttpClientFactory
 {
-    /// <summary>
-    /// Cache for the clients
-    /// </summary>
-    private readonly ConcurrentDictionary<string, HttpClient> clients =
-        new ConcurrentDictionary<string, HttpClient>();
+    private readonly ConcurrentDictionary<string, HttpClient> clients = new();
 
     /// <summary>
     /// Gets a cached client for the host associated to the input URL
@@ -48,26 +44,16 @@ public class HttpClientFactory : IHttpClientFactory
     {
         return this.clients.AddOrUpdate(
             key: uri.Host,
-            addValueFactory: u => {
-                return CreateClient();
-            },
-            updateValueFactory: (u, client) => {
-                return client;
-            }
-        );
+            addValueFactory: u => CreateClient(),
+            updateValueFactory: (u, client) => client);
     }
 
     private HttpClient ProxiedClientFromCache(Uri proxyUri)
     {
         return this.clients.AddOrUpdate(
             key: proxyUri.ToString(),
-            addValueFactory: u => {
-                return CreateProxiedClient(proxyUri);
-            },
-            updateValueFactory: (u, client) => {
-                return client;
-            }
-        );
+            addValueFactory: u => CreateProxiedClient(proxyUri),
+            updateValueFactory: (u, client) => client);
     }
 
     protected virtual HttpClient CreateProxiedClient(Uri proxyUrl)
@@ -80,7 +66,7 @@ public class HttpClientFactory : IHttpClientFactory
             proxy.Credentials = new NetworkCredential(parts[0], parts[1]);
         }
 
-        HttpMessageHandler handler = new SocketsHttpHandler()
+        HttpMessageHandler handler = new SocketsHttpHandler
         {
             Proxy = proxy,
             UseProxy = true,
@@ -99,7 +85,7 @@ public class HttpClientFactory : IHttpClientFactory
 
     protected virtual HttpClient CreateClient()
     {
-        HttpMessageHandler handler = new SocketsHttpHandler()
+        HttpMessageHandler handler = new SocketsHttpHandler
         {
             PooledConnectionLifetime = TimeSpan.FromMinutes(10),
             UseCookies = false,
