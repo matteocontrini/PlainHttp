@@ -1,9 +1,6 @@
-﻿using Flurl.Util;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
-using System.Text.Json;
-using System.Xml;
-using System.Xml.Serialization;
+using PlainHttp.Payloads;
 
 namespace PlainHttp;
 
@@ -25,9 +22,7 @@ public class HttpRequest : IHttpRequest
 
     public Uri? Proxy { get; set; }
 
-    public object? Payload { get; set; }
-
-    public ContentType ContentType { get; set; } = ContentType.Raw;
+    public IPayload? Payload { get; set; }
 
     public string? DownloadFileName { get; set; }
 
@@ -72,6 +67,7 @@ public class HttpRequest : IHttpRequest
             requestMessage.Headers.TryAddWithoutValidation(headerName, this.Headers[headerName]);
         }
 
+        // Set the HTTP version
         if (this.HttpVersion != null)
         {
             requestMessage.Version = this.HttpVersion;
@@ -83,7 +79,7 @@ public class HttpRequest : IHttpRequest
         var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
         // Enable timeout, if set
-        if (this.Timeout != default)
+        if (this.Timeout != null)
         {
             cts.CancelAfter(this.Timeout.Value);
         }
@@ -95,23 +91,7 @@ public class HttpRequest : IHttpRequest
             // Serialize the payload
             if (this.Payload != null)
             {
-                switch (this.ContentType)
-                {
-                    case ContentType.Json:
-                        SerializeToJson(requestMessage);
-                        break;
-                    case ContentType.Xml:
-                        SerializeToXml(requestMessage);
-                        break;
-                    case ContentType.UrlEncoded:
-                        SerializeToUrlEncoded(requestMessage);
-                        break;
-                    case ContentType.Raw:
-                        requestMessage.Content = new StringContent(this.Payload.ToString()!);
-                        break;
-                    default:
-                        throw new ArgumentException($"Unknown content type: {this.ContentType}");
-                }
+                requestMessage.Content = this.Payload.Serialize();
             }
 
             // Send the request
@@ -171,86 +151,6 @@ public class HttpRequest : IHttpRequest
         HttpResponseMessage message = TestingMode.Value!.RequestsQueue.Dequeue();
 
         return await CreateHttpResponse(message).ConfigureAwait(false);
-    }
-
-    private void SerializeToUrlEncoded(HttpRequestMessage requestMessage)
-    {
-        // Already serialized
-        if (this.Payload is string stringPayload)
-        {
-            requestMessage.Content = new StringContent(
-                content: stringPayload,
-                encoding: Encoding.UTF8,
-                mediaType: "application/x-www-form-urlencoded"
-            );
-        }
-        else
-        {
-            var qp = new Flurl.QueryParamCollection();
-
-            foreach ((string key, object value) in this.Payload.ToKeyValuePairs())
-            {
-                qp.AddOrReplace(key, value, false, Flurl.NullValueHandling.Ignore);
-            }
-
-            string serialized = qp.ToString(true);
-
-            requestMessage.Content = new StringContent(
-                content: serialized,
-                encoding: Encoding.UTF8,
-                mediaType: "application/x-www-form-urlencoded"
-            );
-        }
-    }
-
-    private void SerializeToXml(HttpRequestMessage requestMessage)
-    {
-        string serialized;
-
-        // Already serialized
-        if (this.Payload is string stringPayload)
-        {
-            serialized = stringPayload;
-        }
-        else
-        {
-            XmlSerializer serializer = new XmlSerializer(this.Payload!.GetType());
-            StringBuilder result = new StringBuilder();
-
-            using (var writer = XmlWriter.Create(result))
-            {
-                serializer.Serialize(writer, this.Payload);
-            }
-
-            serialized = result.ToString();
-        }
-
-        requestMessage.Content = new StringContent(
-            content: serialized,
-            encoding: Encoding.UTF8,
-            mediaType: "text/xml"
-        );
-    }
-
-    private void SerializeToJson(HttpRequestMessage requestMessage)
-    {
-        string serialized;
-
-        // Already serialized
-        if (this.Payload is string stringPayload)
-        {
-            serialized = stringPayload;
-        }
-        else
-        {
-            serialized = JsonSerializer.Serialize(this.Payload);
-        }
-
-        requestMessage.Content = new StringContent(
-            content: serialized,
-            encoding: Encoding.UTF8,
-            mediaType: "application/json"
-        );
     }
 
     public override string ToString()
