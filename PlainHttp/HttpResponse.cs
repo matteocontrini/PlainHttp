@@ -91,6 +91,18 @@ public class HttpResponse : IHttpResponse, IDisposable
         }
     }
 
+    public void EnsureSuccessStatusCode()
+    {
+        try
+        {
+            this.Message.EnsureSuccessStatusCode();
+        }
+        catch (System.Net.Http.HttpRequestException ex)
+        {
+            throw new HttpRequestException(this.Request, ex);
+        }
+    }
+
     public void Dispose()
     {
         this.Message.Dispose();

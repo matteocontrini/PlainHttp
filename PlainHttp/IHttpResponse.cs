@@ -10,4 +10,5 @@ public interface IHttpResponse
 
     string? GetSingleHeader(string name);
     Task ReadBody();
+    void EnsureSuccessStatusCode();
 }
