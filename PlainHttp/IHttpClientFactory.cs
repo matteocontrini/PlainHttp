@@ -1,7 +1,4 @@
-﻿using System;
-using System.Net.Http;
-
-namespace PlainHttp;
+﻿namespace PlainHttp;
 
 public interface IHttpClientFactory
 {

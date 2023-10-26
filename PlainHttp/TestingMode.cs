@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Net.Http;
-
-namespace PlainHttp;
+﻿namespace PlainHttp;
 
 public class TestingMode
 {

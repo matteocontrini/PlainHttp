@@ -3,6 +3,8 @@
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
         <LangVersion>10.0</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
         <VersionPrefix>1.3.0</VersionPrefix>
         <Description>Easy HTTP client with support for serialization, proxies, testing and more </Description>
         <RepositoryUrl>https://github.com/matteocontrini/PlainHttp</RepositoryUrl>

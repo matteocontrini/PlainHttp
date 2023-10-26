@@ -1,17 +1,13 @@
-﻿using System;
-using System.Net.Http;
-using System.Threading.Tasks;
-
-namespace PlainHttp;
+﻿namespace PlainHttp;
 
 public interface IHttpResponse
 {
-    string Body { get; set; }
-    HttpResponseMessage Message { get; set; }
-    HttpRequest Request { get; set; }
+    HttpRequest Request { get; }
+    HttpResponseMessage Message { get; }
+    string? Body { get; }
     bool Succeeded { get; }
-    TimeSpan ElapsedTime { get; set; }
+    TimeSpan ElapsedTime { get; }
 
-    string GetSingleHeader(string name);
+    string? GetSingleHeader(string name);
     Task ReadBody();
 }

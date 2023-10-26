@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Net;
-using System.Net.Http;
 
 namespace PlainHttp;
 
@@ -77,7 +75,7 @@ public class HttpClientFactory : IHttpClientFactory
 
         HttpClient client = new HttpClient(handler)
         {
-            Timeout = System.Threading.Timeout.InfiniteTimeSpan
+            Timeout = Timeout.InfiniteTimeSpan
         };
 
         return client;
@@ -94,7 +92,7 @@ public class HttpClientFactory : IHttpClientFactory
 
         HttpClient client = new HttpClient(handler)
         {
-            Timeout = System.Threading.Timeout.InfiniteTimeSpan
+            Timeout = Timeout.InfiniteTimeSpan
         };
 
         return client;

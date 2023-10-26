@@ -1,25 +1,15 @@
-﻿using System;
-using System.Diagnostics;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 
 namespace PlainHttp;
 
 public class HttpResponse : IHttpResponse, IDisposable
 {
-    public HttpResponseMessage Message { get; set; }
+    public HttpRequest Request { get; init; }
+    public HttpResponseMessage Message { get; init; }
+    public string? Body { get; private set; }
+    public bool Succeeded => this.Message.IsSuccessStatusCode;
 
-    public string Body { get; set; }
-
-    public HttpRequest Request { get; set; }
-
-    public bool Succeeded
-    {
-        get { return this.Message.IsSuccessStatusCode; }
-    }
-
-    public TimeSpan ElapsedTime { get; set; }
+    public TimeSpan ElapsedTime { get; internal set; }
 
     public HttpResponse(HttpRequest request, HttpResponseMessage message)
     {
@@ -27,15 +17,7 @@ public class HttpResponse : IHttpResponse, IDisposable
         this.Message = message;
     }
 
-    public HttpResponse(HttpRequest request, HttpResponseMessage message, string body)
-        : this(request, message)
-    {
-        this.Request = request;
-        this.Message = message;
-        this.Body = body;
-    }
-
-    public string GetSingleHeader(string name)
+    public string? GetSingleHeader(string name)
     {
         if (this.Message.Headers.TryGetValues(name, out var values) ||
             this.Message.Content.Headers.TryGetValues(name, out values))
@@ -50,12 +32,12 @@ public class HttpResponse : IHttpResponse, IDisposable
 
     public async Task ReadBody()
     {
-        if (Body != null)
+        if (this.Body != null)
         {
             return;
         }
 
-        Stopwatch stopwatch = null;
+        Stopwatch? stopwatch = null;
         TimeSpan newTimeout = default;
 
         // If the HttpCompletionOption is set to ResponseHeadersRead,
@@ -68,7 +50,7 @@ public class HttpResponse : IHttpResponse, IDisposable
             if (this.Request.Timeout != default)
             {
                 // Calculate how much time we have left
-                newTimeout = this.Request.Timeout - this.ElapsedTime;
+                newTimeout = this.Request.Timeout.Value - this.ElapsedTime;
             }
         }
 

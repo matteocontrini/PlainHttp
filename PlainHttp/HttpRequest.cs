@@ -1,13 +1,7 @@
 ﻿using Flurl.Util;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Net.Http;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -19,36 +13,31 @@ public class HttpRequest : IHttpRequest
 
     public Uri Uri { get; set; }
 
-    public Version HttpVersion { get; set; }
+    public Version? HttpVersion { get; set; }
 
     public static IHttpClientFactory HttpClientFactory { get; set; } = new HttpClientFactory();
 
-    public HttpRequestMessage Message { get; protected set; }
+    public HttpRequestMessage? Message { get; protected set; }
 
-    public TimeSpan Timeout { get; set; }
-        = TimeSpan.Zero;
+    public TimeSpan? Timeout { get; set; }
 
     public Dictionary<string, string> Headers { get; set; } = new();
 
-    public Uri Proxy { get; set; }
+    public Uri? Proxy { get; set; }
 
-    public object Payload { get; set; }
+    public object? Payload { get; set; }
 
-    public ContentType ContentType { get; set; }
+    public ContentType ContentType { get; set; } = ContentType.Raw;
 
-    public string DownloadFileName { get; set; }
+    public string? DownloadFileName { get; set; }
 
-    public Encoding ResponseEncoding { get; set; }
+    public Encoding? ResponseEncoding { get; set; }
 
     public HttpCompletionOption HttpCompletionOption { get; set; } = HttpCompletionOption.ResponseContentRead;
 
     public bool ReadBody { get; set; } = true;
 
-    private static AsyncLocal<TestingMode> testingMode = new();
-
-    public HttpRequest()
-    {
-    }
+    private static readonly AsyncLocal<TestingMode> TestingMode = new();
 
     public HttpRequest(Uri uri)
     {
@@ -62,7 +51,7 @@ public class HttpRequest : IHttpRequest
 
     public async Task<IHttpResponse> SendAsync(CancellationToken cancellationToken = default)
     {
-        if (testingMode.Value != null)
+        if (TestingMode.Value != null)
         {
             return await MockedResponse().ConfigureAwait(false);
         }
@@ -94,9 +83,9 @@ public class HttpRequest : IHttpRequest
         var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
         // Enable timeout, if set
-        if (this.Timeout != TimeSpan.Zero)
+        if (this.Timeout != default)
         {
-            cts.CancelAfter(this.Timeout);
+            cts.CancelAfter(this.Timeout.Value);
         }
 
         Stopwatch stopwatch = Stopwatch.StartNew();
@@ -106,22 +95,22 @@ public class HttpRequest : IHttpRequest
             // Serialize the payload
             if (this.Payload != null)
             {
-                if (this.ContentType == ContentType.Json)
+                switch (this.ContentType)
                 {
-                    SerializeToJson(requestMessage);
-                }
-                else if (this.ContentType == ContentType.Xml)
-                {
-                    SerializeToXml(requestMessage);
-                }
-                else if (this.ContentType == ContentType.UrlEncoded)
-                {
-                    SerializeToUrlEncoded(requestMessage);
-                }
-                // Raw
-                else
-                {
-                    requestMessage.Content = new StringContent(this.Payload.ToString());
+                    case ContentType.Json:
+                        SerializeToJson(requestMessage);
+                        break;
+                    case ContentType.Xml:
+                        SerializeToXml(requestMessage);
+                        break;
+                    case ContentType.UrlEncoded:
+                        SerializeToUrlEncoded(requestMessage);
+                        break;
+                    case ContentType.Raw:
+                        requestMessage.Content = new StringContent(this.Payload.ToString()!);
+                        break;
+                    default:
+                        throw new ArgumentException($"Unknown content type: {this.ContentType}");
                 }
             }
 
@@ -132,7 +121,7 @@ public class HttpRequest : IHttpRequest
 
             // Wrap the content into an HttpResponse instance,
             // also reading the body (string or file), if requested
-            IHttpResponse response = await CreateHttpResponse(responseMessage).ConfigureAwait(false);
+            HttpResponse response = await CreateHttpResponse(responseMessage).ConfigureAwait(false);
 
             response.ElapsedTime = stopwatch.Elapsed;
 
@@ -149,12 +138,12 @@ public class HttpRequest : IHttpRequest
         }
     }
 
-    private async Task<IHttpResponse> CreateHttpResponse(HttpResponseMessage responseMessage)
+    private async Task<HttpResponse> CreateHttpResponse(HttpResponseMessage responseMessage)
     {
         // No file name given, read the body of the response as a string
         if (this.DownloadFileName == null)
         {
-            IHttpResponse response = new HttpResponse(this, responseMessage);
+            HttpResponse response = new HttpResponse(this, responseMessage);
 
             if (this.ReadBody)
             {
@@ -166,8 +155,8 @@ public class HttpRequest : IHttpRequest
         // Copy the response to a file
         else
         {
-            using (Stream stream = await responseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false))
-            using (FileStream fs = new FileStream(this.DownloadFileName, FileMode.Create, FileAccess.Write))
+            await using (Stream stream = await responseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false))
+            await using (FileStream fs = new FileStream(this.DownloadFileName, FileMode.Create, FileAccess.Write))
             {
                 await stream.CopyToAsync(fs).ConfigureAwait(false);
             }
@@ -179,7 +168,7 @@ public class HttpRequest : IHttpRequest
     private async Task<IHttpResponse> MockedResponse()
     {
         // Get the testing mode instance for this async context
-        HttpResponseMessage message = testingMode.Value.RequestsQueue.Dequeue();
+        HttpResponseMessage message = TestingMode.Value!.RequestsQueue.Dequeue();
 
         return await CreateHttpResponse(message).ConfigureAwait(false);
     }
@@ -187,10 +176,10 @@ public class HttpRequest : IHttpRequest
     private void SerializeToUrlEncoded(HttpRequestMessage requestMessage)
     {
         // Already serialized
-        if (this.Payload is string)
+        if (this.Payload is string stringPayload)
         {
             requestMessage.Content = new StringContent(
-                content: this.Payload.ToString(),
+                content: stringPayload,
                 encoding: Encoding.UTF8,
                 mediaType: "application/x-www-form-urlencoded"
             );
@@ -219,13 +208,13 @@ public class HttpRequest : IHttpRequest
         string serialized;
 
         // Already serialized
-        if (this.Payload is string)
+        if (this.Payload is string stringPayload)
         {
-            serialized = this.Payload.ToString();
+            serialized = stringPayload;
         }
         else
         {
-            XmlSerializer serializer = new XmlSerializer(this.Payload.GetType());
+            XmlSerializer serializer = new XmlSerializer(this.Payload!.GetType());
             StringBuilder result = new StringBuilder();
 
             using (var writer = XmlWriter.Create(result))
@@ -248,9 +237,9 @@ public class HttpRequest : IHttpRequest
         string serialized;
 
         // Already serialized
-        if (this.Payload is string)
+        if (this.Payload is string stringPayload)
         {
-            serialized = this.Payload.ToString();
+            serialized = stringPayload;
         }
         else
         {
@@ -271,6 +260,6 @@ public class HttpRequest : IHttpRequest
 
     public static void SetTestingMode(TestingMode t)
     {
-        testingMode.Value = t;
+        TestingMode.Value = t;
     }
 }
