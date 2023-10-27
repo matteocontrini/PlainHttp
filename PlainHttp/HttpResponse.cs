@@ -72,11 +72,7 @@ public class HttpResponse : IHttpResponse, IDisposable
         }
     }
 
-    /// <summary>
-    /// Reads the response body as a stream. The returned stream should be manually disposed after use.
-    /// If HttpCompletionOption is set to ResponseHeadersRead, the request timeout will not apply to reads on this stream.
-    /// </summary>
-    /// <returns>A Task whose result is the response body as a stream.</returns>
+    /// <inheritdoc />
     public async Task<Stream> ReadStream()
     {
         return await this.Message.Content
@@ -84,11 +80,7 @@ public class HttpResponse : IHttpResponse, IDisposable
             .ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Reads the response body as a string and disposes the response.
-    /// Takes into consideration the timeout if HttpCompletionOption is set to ResponseHeadersRead.
-    /// </summary>
-    /// <returns>A Task whose result is the response body as a string.</returns>
+    /// <inheritdoc />
     public async Task<string> ReadString()
     {
         return await ReadWrapper(timeLeft =>
@@ -98,12 +90,7 @@ public class HttpResponse : IHttpResponse, IDisposable
         ).ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Reads the response body as a string with the given encoding and disposes the response.
-    /// Takes into consideration the timeout if HttpCompletionOption is set to ResponseHeadersRead.
-    /// </summary>
-    /// <param name="encoding">The encoding to use when reading the response body.</param>
-    /// <returns>A Task whose result is the response body as a string.</returns>
+    /// <inheritdoc />
     public async Task<string> ReadString(Encoding encoding)
     {
         return await ReadWrapper(async timeLeft =>
@@ -117,11 +104,7 @@ public class HttpResponse : IHttpResponse, IDisposable
         ).ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Reads and deserializes the response body as JSON and disposes the response.
-    /// </summary>
-    /// <typeparam name="T">A type whose structure matches the expected JSON response.</typeparam>
-    /// <returns>A Task whose result is an object containing data in the response body.</returns> 
+    /// <inheritdoc />
     public async Task<T?> ReadJson<T>(JsonSerializerOptions? options = null)
     {
         return await ReadWrapper(async timeLeft =>
@@ -150,6 +133,7 @@ public class HttpResponse : IHttpResponse, IDisposable
         ).ConfigureAwait(false);
     }
 
+    /// <inheritdoc />
     public async Task<T?> ReadXml<T>(XmlReaderSettings? settings = null)
     {
         return await ReadWrapper(async timeLeft =>
@@ -165,11 +149,7 @@ public class HttpResponse : IHttpResponse, IDisposable
         }).ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Downloads the response body to the given path and disposes the response.
-    /// </summary>
-    /// <param name="path">The path to download the file to.</param>
-    /// <returns>A Task whose result is the path to the downloaded file.</returns>
+    /// <inheritdoc />
     public async Task<string> DownloadFile(string path)
     {
         return await ReadWrapper(async timeLeft =>
@@ -188,10 +168,7 @@ public class HttpResponse : IHttpResponse, IDisposable
         }).ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Reads the response body as a byte array and disposes the response.
-    /// </summary>
-    /// <returns>A Task whose result is the response body as a byte array.</returns>
+    /// <inheritdoc />
     public async Task<byte[]> ReadBytes()
     {
         return await ReadWrapper(timeLeft =>
@@ -201,9 +178,7 @@ public class HttpResponse : IHttpResponse, IDisposable
         ).ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Ensures that the response status code is successful, otherwise throws an exception.
-    /// </summary>
+    /// <inheritdoc />
     public void EnsureSuccessStatusCode()
     {
         try
