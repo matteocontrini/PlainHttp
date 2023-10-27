@@ -7,7 +7,7 @@ using System.Xml.Serialization;
 
 namespace PlainHttp;
 
-public class HttpResponse : IHttpResponse, IDisposable
+public class HttpResponse : IHttpResponse
 {
     public HttpRequest Request { get; init; }
     public HttpResponseMessage Message { get; init; }

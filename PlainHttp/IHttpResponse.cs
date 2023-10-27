@@ -5,7 +5,7 @@ using System.Xml;
 
 namespace PlainHttp;
 
-public interface IHttpResponse
+public interface IHttpResponse : IDisposable
 {
     HttpRequest Request { get; }
     HttpResponseMessage Message { get; }
