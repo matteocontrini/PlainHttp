@@ -42,7 +42,7 @@ public class HttpResponse : IHttpResponse, IDisposable
             // Calculate how much time we have left until the timeout
             timeLeft = this.Request.Timeout != null
                 ? this.Request.Timeout.Value - this.ElapsedTime
-                : default;
+                : Timeout.InfiniteTimeSpan;
 
             // Start measuring how long the read will last
             stopwatch = Stopwatch.StartNew();
