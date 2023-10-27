@@ -54,7 +54,7 @@ public class HttpResponse : IHttpResponse, IDisposable
         }
         catch (Exception ex)
         {
-            if (ex is OperationCanceledException)
+            if (ex is TimeoutException)
             {
                 throw new HttpRequestTimeoutException(this.Request, ex);
             }
@@ -92,7 +92,7 @@ public class HttpResponse : IHttpResponse, IDisposable
         return ReadWrapper(timeLeft =>
             this.Message.Content
                 .ReadAsStringAsync()
-                .WithTimeout(timeLeft)
+                .WaitAsync(timeLeft)
         );
     }
 
@@ -107,7 +107,7 @@ public class HttpResponse : IHttpResponse, IDisposable
         return ReadWrapper(async timeLeft =>
             {
                 byte[] array = await this.Message.Content.ReadAsByteArrayAsync()
-                    .WithTimeout(timeLeft)
+                    .WaitAsync(timeLeft)
                     .ConfigureAwait(false);
 
                 return encoding.GetString(array);
@@ -134,7 +134,7 @@ public class HttpResponse : IHttpResponse, IDisposable
                     // from the network, through the stream
                     return await JsonSerializer.DeserializeAsync<T>(stream, options)
                         .AsTask()
-                        .WithTimeout(timeLeft)
+                        .WaitAsync(timeLeft)
                         .ConfigureAwait(false);
                 }
                 else
@@ -179,7 +179,7 @@ public class HttpResponse : IHttpResponse, IDisposable
             await using FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write);
 
             await stream.CopyToAsync(fs)
-                .WithTimeout(timeLeft)
+                .WaitAsync(timeLeft)
                 .ConfigureAwait(false);
 
             return path;
@@ -195,7 +195,7 @@ public class HttpResponse : IHttpResponse, IDisposable
         return ReadWrapper(timeLeft =>
             this.Message.Content
                 .ReadAsByteArrayAsync()
-                .WithTimeout(timeLeft)
+                .WaitAsync(timeLeft)
         );
     }
 
