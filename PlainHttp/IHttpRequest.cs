@@ -9,7 +9,7 @@ public interface IHttpRequest
     HttpMethod Method { get; set; }
     IPayload? Payload { get; set; }
     Uri? Proxy { get; set; }
-    TimeSpan? Timeout { get; set; }
+    TimeSpan Timeout { get; set; }
     Uri Uri { get; set; }
     HttpCompletionOption HttpCompletionOption { get; set; }
 

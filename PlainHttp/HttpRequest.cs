@@ -15,7 +15,7 @@ public class HttpRequest : IHttpRequest
 
     public HttpRequestMessage? Message { get; protected set; }
 
-    public TimeSpan? Timeout { get; set; }
+    public TimeSpan Timeout { get; set; } = System.Threading.Timeout.InfiniteTimeSpan;
 
     public Dictionary<string, string> Headers { get; set; } = new();
 
@@ -72,9 +72,9 @@ public class HttpRequest : IHttpRequest
         var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
         // Enable timeout, if set
-        if (this.Timeout != null)
+        if (this.Timeout != System.Threading.Timeout.InfiniteTimeSpan)
         {
-            cts.CancelAfter(this.Timeout.Value);
+            cts.CancelAfter(this.Timeout);
         }
 
         Stopwatch stopwatch = Stopwatch.StartNew();

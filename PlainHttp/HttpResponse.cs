@@ -40,8 +40,8 @@ public class HttpResponse : IHttpResponse, IDisposable
         if (this.Request.HttpCompletionOption == HttpCompletionOption.ResponseHeadersRead)
         {
             // Calculate how much time we have left until the timeout
-            timeLeft = this.Request.Timeout != null
-                ? this.Request.Timeout.Value - this.ElapsedTime
+            timeLeft = this.Request.Timeout != Timeout.InfiniteTimeSpan
+                ? this.Request.Timeout - this.ElapsedTime
                 : Timeout.InfiniteTimeSpan;
 
             // Start measuring how long the read will last
