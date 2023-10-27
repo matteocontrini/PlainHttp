@@ -19,4 +19,10 @@ public interface IHttpResponse
     Task<T?> ReadJson<T>(JsonSerializerOptions? options = null);
     Task<string> DownloadFile(string path);
     Task<T?> ReadXml<T>(XmlReaderSettings? settings = null);
+
+    /// <summary>
+    /// Reads the response body as a byte array and disposes the response.
+    /// </summary>
+    /// <returns>A Task whose result is the response body as a byte array.</returns>
+    Task<byte[]> ReadBytes();
 }

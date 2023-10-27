@@ -186,6 +186,22 @@ public class HttpResponse : IHttpResponse, IDisposable
         });
     }
 
+    /// <summary>
+    /// Reads the response body as a byte array and disposes the response.
+    /// </summary>
+    /// <returns>A Task whose result is the response body as a byte array.</returns>
+    public Task<byte[]> ReadBytes()
+    {
+        return ReadWrapper(timeLeft =>
+            this.Message.Content
+                .ReadAsByteArrayAsync()
+                .WithTimeout(timeLeft)
+        );
+    }
+
+    /// <summary>
+    /// Ensures that the response status code is successful, otherwise throws an exception.
+    /// </summary>
     public void EnsureSuccessStatusCode()
     {
         try
