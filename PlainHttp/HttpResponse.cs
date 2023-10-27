@@ -77,9 +77,11 @@ public class HttpResponse : IHttpResponse, IDisposable
     /// If HttpCompletionOption is set to ResponseHeadersRead, the request timeout will not apply to reads on this stream.
     /// </summary>
     /// <returns>A Task whose result is the response body as a stream.</returns>
-    public Task<Stream> ReadStream()
+    public async Task<Stream> ReadStream()
     {
-        return this.Message.Content.ReadAsStreamAsync();
+        return await this.Message.Content
+            .ReadAsStreamAsync()
+            .ConfigureAwait(false);
     }
 
     /// <summary>
@@ -87,13 +89,13 @@ public class HttpResponse : IHttpResponse, IDisposable
     /// Takes into consideration the timeout if HttpCompletionOption is set to ResponseHeadersRead.
     /// </summary>
     /// <returns>A Task whose result is the response body as a string.</returns>
-    public Task<string> ReadString()
+    public async Task<string> ReadString()
     {
-        return ReadWrapper(timeLeft =>
+        return await ReadWrapper(timeLeft =>
             this.Message.Content
                 .ReadAsStringAsync()
                 .WaitAsync(timeLeft)
-        );
+        ).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -102,9 +104,9 @@ public class HttpResponse : IHttpResponse, IDisposable
     /// </summary>
     /// <param name="encoding">The encoding to use when reading the response body.</param>
     /// <returns>A Task whose result is the response body as a string.</returns>
-    public Task<string> ReadString(Encoding encoding)
+    public async Task<string> ReadString(Encoding encoding)
     {
-        return ReadWrapper(async timeLeft =>
+        return await ReadWrapper(async timeLeft =>
             {
                 byte[] array = await this.Message.Content.ReadAsByteArrayAsync()
                     .WaitAsync(timeLeft)
@@ -112,7 +114,7 @@ public class HttpResponse : IHttpResponse, IDisposable
 
                 return encoding.GetString(array);
             }
-        );
+        ).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -120,9 +122,9 @@ public class HttpResponse : IHttpResponse, IDisposable
     /// </summary>
     /// <typeparam name="T">A type whose structure matches the expected JSON response.</typeparam>
     /// <returns>A Task whose result is an object containing data in the response body.</returns> 
-    public Task<T?> ReadJson<T>(JsonSerializerOptions? options = null)
+    public async Task<T?> ReadJson<T>(JsonSerializerOptions? options = null)
     {
-        return ReadWrapper(async timeLeft =>
+        return await ReadWrapper(async timeLeft =>
             {
                 await using Stream stream = await this.Message.Content
                     .ReadAsStreamAsync()
@@ -145,12 +147,12 @@ public class HttpResponse : IHttpResponse, IDisposable
                     return JsonSerializer.Deserialize<T>(stream, options);
                 }
             }
-        );
+        ).ConfigureAwait(false);
     }
 
-    public Task<T?> ReadXml<T>(XmlReaderSettings? settings = null)
+    public async Task<T?> ReadXml<T>(XmlReaderSettings? settings = null)
     {
-        return ReadWrapper(async timeLeft =>
+        return await ReadWrapper(async timeLeft =>
         {
             await using Stream stream = await this.Message.Content
                 .ReadAsStreamAsync()
@@ -160,7 +162,7 @@ public class HttpResponse : IHttpResponse, IDisposable
             var reader = XmlReader.Create(stream, settings);
             var serializer = new XmlSerializer(typeof(T));
             return (T?)serializer.Deserialize(reader);
-        });
+        }).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -168,9 +170,9 @@ public class HttpResponse : IHttpResponse, IDisposable
     /// </summary>
     /// <param name="path">The path to download the file to.</param>
     /// <returns>A Task whose result is the path to the downloaded file.</returns>
-    public Task<string> DownloadFile(string path)
+    public async Task<string> DownloadFile(string path)
     {
-        return ReadWrapper(async timeLeft =>
+        return await ReadWrapper(async timeLeft =>
         {
             await using Stream stream = await this.Message.Content
                 .ReadAsStreamAsync()
@@ -183,20 +185,20 @@ public class HttpResponse : IHttpResponse, IDisposable
                 .ConfigureAwait(false);
 
             return path;
-        });
+        }).ConfigureAwait(false);
     }
 
     /// <summary>
     /// Reads the response body as a byte array and disposes the response.
     /// </summary>
     /// <returns>A Task whose result is the response body as a byte array.</returns>
-    public Task<byte[]> ReadBytes()
+    public async Task<byte[]> ReadBytes()
     {
-        return ReadWrapper(timeLeft =>
+        return await ReadWrapper(timeLeft =>
             this.Message.Content
                 .ReadAsByteArrayAsync()
                 .WaitAsync(timeLeft)
-        );
+        ).ConfigureAwait(false);
     }
 
     /// <summary>
