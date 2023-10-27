@@ -142,8 +142,15 @@ public class HttpResponse : IHttpResponse, IDisposable
                 .ReadAsStreamAsync()
                 .ConfigureAwait(false);
 
-            // TODO: this is synchronous unfortunately so we're not setting the timeout
-            var reader = XmlReader.Create(stream, settings);
+            // Since the stream read+deserialization can only happen synchronously due to XmlSerializer,
+            // we first read the whole response in memory asynchronously, then deserialize it synchronously.
+            // If the response was already a MemoryStream, this will do nothing.
+            // If the response was still being read from the network, this will at least not block the thread.
+            await using MemoryStream memoryStream = await StreamHelper.ConvertToMemoryStream(stream)
+                .WaitAsync(timeLeft)
+                .ConfigureAwait(false);
+
+            var reader = XmlReader.Create(memoryStream, settings);
             var serializer = new XmlSerializer(typeof(T));
             return (T?)serializer.Deserialize(reader);
         }).ConfigureAwait(false);
