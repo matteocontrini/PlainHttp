@@ -35,25 +35,22 @@ public class HttpResponse : IHttpResponse, IDisposable
     private Task<T> ReadWrapper<T>(Func<TimeSpan, Task<T>> readFunc)
     {
         Stopwatch? stopwatch = null;
-        TimeSpan newTimeout = default;
+        TimeSpan timeLeft = default;
 
-        // If the HttpCompletionOption is set to ResponseHeadersRead,
-        // this method is being called in a second moment, so ElapsedTime is already populated
-        if (this.ElapsedTime != default)
+        if (this.Request.HttpCompletionOption == HttpCompletionOption.ResponseHeadersRead)
         {
-            // Start a stopwatch to measure how long the read will last
-            stopwatch = Stopwatch.StartNew();
-
             // Calculate how much time we have left until the timeout
-            if (this.Request.Timeout != null)
-            {
-                newTimeout = this.Request.Timeout.Value - this.ElapsedTime;
-            }
+            timeLeft = this.Request.Timeout != null
+                ? this.Request.Timeout.Value - this.ElapsedTime
+                : default;
+
+            // Start measuring how long the read will last
+            stopwatch = Stopwatch.StartNew();
         }
 
         try
         {
-            return readFunc(newTimeout);
+            return readFunc(timeLeft);
         }
         catch (Exception ex)
         {
@@ -75,36 +72,42 @@ public class HttpResponse : IHttpResponse, IDisposable
         }
     }
 
-    // TODO: document that it should be disposed
+    /// <summary>
+    /// Reads the response body as a stream. The returned stream should be manually disposed after use.
+    /// If HttpCompletionOption is set to ResponseHeadersRead, the request timeout will not apply to reads on this stream.
+    /// </summary>
+    /// <returns>A Task whose result is the response body as a stream.</returns>
     public Task<Stream> ReadStream()
     {
-        // TODO: don't dispose
-        return ReadWrapper(async newTimeout =>
-            await this.Message.Content
-                .ReadAsStreamAsync()
-                .WithTimeout(newTimeout)
-                .ConfigureAwait(false)
-        );
+        return this.Message.Content.ReadAsStreamAsync();
     }
 
-    // TODO: docs
+    /// <summary>
+    /// Reads the response body as a string and disposes the response.
+    /// Takes into consideration the timeout if HttpCompletionOption is set to ResponseHeadersRead.
+    /// </summary>
+    /// <returns>A Task whose result is the response body as a string.</returns>
     public Task<string> ReadString()
     {
-        // TODO: wrap only if HttpCompletionOption is set to ResponseHeadersRead
-        return ReadWrapper(async newTimeout =>
-            await this.Message.Content.ReadAsStringAsync()
-                .WithTimeout(newTimeout)
-                .ConfigureAwait(false)
+        return ReadWrapper(timeLeft =>
+            this.Message.Content
+                .ReadAsStringAsync()
+                .WithTimeout(timeLeft)
         );
     }
 
+    /// <summary>
+    /// Reads the response body as a string with the given encoding and disposes the response.
+    /// Takes into consideration the timeout if HttpCompletionOption is set to ResponseHeadersRead.
+    /// </summary>
+    /// <param name="encoding">The encoding to use when reading the response body.</param>
+    /// <returns>A Task whose result is the response body as a string.</returns>
     public Task<string> ReadString(Encoding encoding)
     {
-        // TODO: wrap only if HttpCompletionOption is set to ResponseHeadersRead
-        return ReadWrapper(async newTimeout =>
+        return ReadWrapper(async timeLeft =>
             {
                 byte[] array = await this.Message.Content.ReadAsByteArrayAsync()
-                    .WithTimeout(newTimeout)
+                    .WithTimeout(timeLeft)
                     .ConfigureAwait(false);
 
                 return encoding.GetString(array);
@@ -112,48 +115,73 @@ public class HttpResponse : IHttpResponse, IDisposable
         );
     }
 
+    /// <summary>
+    /// Reads and deserializes the response body as JSON and disposes the response.
+    /// </summary>
+    /// <typeparam name="T">A type whose structure matches the expected JSON response.</typeparam>
+    /// <returns>A Task whose result is an object containing data in the response body.</returns> 
     public Task<T?> ReadJson<T>(JsonSerializerOptions? options = null)
     {
-        // TODO: wrap only if HttpCompletionOption is set to ResponseHeadersRead
-        return ReadWrapper(async newTimeout =>
+        return ReadWrapper(async timeLeft =>
             {
                 await using Stream stream = await this.Message.Content
                     .ReadAsStreamAsync()
-                    .WithTimeout(newTimeout)
                     .ConfigureAwait(false);
 
-                return JsonSerializer.Deserialize<T>(stream, options);
+                if (this.Request.HttpCompletionOption == HttpCompletionOption.ResponseHeadersRead)
+                {
+                    // Use async variant since the deserializer will do the actual read
+                    // from the network, through the stream
+                    return await JsonSerializer.DeserializeAsync<T>(stream, options)
+                        .AsTask()
+                        .WithTimeout(timeLeft)
+                        .ConfigureAwait(false);
+                }
+                else
+                {
+                    // The stream is a fully-read MemoryStream, so we can use the sync variant
+                    // (it would be sync even if we used the async variant)
+                    // https://github.com/dotnet/runtime/issues/1574#issuecomment-535324331
+                    return JsonSerializer.Deserialize<T>(stream, options);
+                }
             }
         );
     }
 
     public Task<T?> ReadXml<T>(XmlReaderSettings? settings = null)
     {
-        // TODO: wrap only if HttpCompletionOption is set to ResponseHeadersRead
-        return ReadWrapper(async newTimeout =>
+        return ReadWrapper(async timeLeft =>
         {
             await using Stream stream = await this.Message.Content
                 .ReadAsStreamAsync()
-                .WithTimeout(newTimeout)
                 .ConfigureAwait(false);
 
+            // TODO: this is synchronous unfortunately so we're not setting the timeout
             var reader = XmlReader.Create(stream, settings);
             var serializer = new XmlSerializer(typeof(T));
             return (T?)serializer.Deserialize(reader);
         });
     }
 
+    /// <summary>
+    /// Downloads the response body to the given path and disposes the response.
+    /// </summary>
+    /// <param name="path">The path to download the file to.</param>
+    /// <returns>A Task whose result is the path to the downloaded file.</returns>
     public Task<string> DownloadFile(string path)
     {
-        // TODO: wrap only if HttpCompletionOption is set to ResponseHeadersRead
-        return ReadWrapper(async newTimeout =>
+        return ReadWrapper(async timeLeft =>
         {
             await using Stream stream = await this.Message.Content
                 .ReadAsStreamAsync()
-                .WithTimeout(newTimeout)
                 .ConfigureAwait(false);
+
             await using FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write);
-            await stream.CopyToAsync(fs).ConfigureAwait(false);
+
+            await stream.CopyToAsync(fs)
+                .WithTimeout(timeLeft)
+                .ConfigureAwait(false);
+
             return path;
         });
     }
