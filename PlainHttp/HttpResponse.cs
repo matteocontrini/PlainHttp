@@ -32,7 +32,7 @@ public class HttpResponse : IHttpResponse, IDisposable
         }
     }
 
-    private Task<T> ReadWrapper<T>(Func<TimeSpan, Task<T>> readFunc)
+    private async Task<T> ReadWrapper<T>(Func<TimeSpan, Task<T>> readFunc)
     {
         Stopwatch? stopwatch = null;
         TimeSpan timeLeft = default;
@@ -50,7 +50,7 @@ public class HttpResponse : IHttpResponse, IDisposable
 
         try
         {
-            return readFunc(timeLeft);
+            return await readFunc(timeLeft).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
