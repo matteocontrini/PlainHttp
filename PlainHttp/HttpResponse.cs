@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Xml;
@@ -11,6 +12,7 @@ public class HttpResponse : IHttpResponse, IDisposable
     public HttpRequest Request { get; init; }
     public HttpResponseMessage Message { get; init; }
     public bool Succeeded => this.Message.IsSuccessStatusCode;
+    public HttpStatusCode StatusCode => this.Message.StatusCode;
     public TimeSpan ElapsedTime { get; internal set; }
 
     public HttpResponse(HttpRequest request, HttpResponseMessage message)

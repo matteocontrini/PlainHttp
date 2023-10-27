@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Net;
+using System.Text;
 using System.Text.Json;
 using System.Xml;
 
@@ -8,6 +9,7 @@ public interface IHttpResponse
 {
     HttpRequest Request { get; }
     HttpResponseMessage Message { get; }
+    HttpStatusCode StatusCode { get; }
     bool Succeeded { get; }
     TimeSpan ElapsedTime { get; }
 
