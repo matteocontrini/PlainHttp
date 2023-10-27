@@ -1,5 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Net;
+using System.Net.Security;
+using System.Security.Authentication;
 
 namespace PlainHttp;
 
@@ -12,6 +14,36 @@ namespace PlainHttp;
 public class HttpClientFactory : IHttpClientFactory
 {
     private readonly ConcurrentDictionary<string, HttpClient> clients = new();
+    private readonly HttpHandlerOptions handlerOptions;
+    private readonly HttpHandlerOptions proxyHandlerOptions;
+
+    public record HttpHandlerOptions
+    {
+        public TimeSpan PooledConnectionLifetime { get; init; } = TimeSpan.FromMinutes(10);
+        public TimeSpan PooledConnectionIdleTimeout { get; init; } = TimeSpan.FromMinutes(1);
+        public TimeSpan ConnectTimeout { get; init; } = Timeout.InfiniteTimeSpan;
+        public DecompressionMethods AutomaticDecompression { get; init; } = DecompressionMethods.All;
+        public SslProtocols EnabledSslProtocols { get; init; } = SslProtocols.None;
+        public bool IgnoreCertificateValidationErrors { get; init; }
+    }
+
+    public HttpClientFactory()
+    {
+        this.handlerOptions = new HttpHandlerOptions();
+        this.proxyHandlerOptions = new HttpHandlerOptions();
+    }
+
+    public HttpClientFactory(HttpHandlerOptions handlerOptions)
+    {
+        this.handlerOptions = handlerOptions;
+        this.proxyHandlerOptions = new HttpHandlerOptions();
+    }
+
+    public HttpClientFactory(HttpHandlerOptions handlerOptions, HttpHandlerOptions proxyHandlerOptions)
+    {
+        this.handlerOptions = handlerOptions;
+        this.proxyHandlerOptions = proxyHandlerOptions;
+    }
 
     /// <summary>
     /// Gets a cached client for the host associated to the provided request URI.
@@ -52,6 +84,29 @@ public class HttpClientFactory : IHttpClientFactory
         );
     }
 
+    protected virtual HttpClient CreateClient()
+    {
+        HttpMessageHandler handler = new SocketsHttpHandler
+        {
+            PooledConnectionLifetime = this.handlerOptions.PooledConnectionLifetime,
+            PooledConnectionIdleTimeout = this.handlerOptions.PooledConnectionIdleTimeout,
+            UseCookies = false,
+            AutomaticDecompression = this.handlerOptions.AutomaticDecompression,
+            SslOptions = CreateSslOptions(
+                this.handlerOptions.EnabledSslProtocols,
+                this.handlerOptions.IgnoreCertificateValidationErrors
+            ),
+            ConnectTimeout = this.handlerOptions.ConnectTimeout
+        };
+
+        HttpClient client = new HttpClient(handler)
+        {
+            Timeout = Timeout.InfiniteTimeSpan
+        };
+
+        return client;
+    }
+
     protected virtual HttpClient CreateProxiedClient(Uri proxyUrl)
     {
         WebProxy proxy = new WebProxy(proxyUrl);
@@ -66,9 +121,15 @@ public class HttpClientFactory : IHttpClientFactory
         {
             Proxy = proxy,
             UseProxy = true,
-            PooledConnectionLifetime = TimeSpan.FromMinutes(10),
+            PooledConnectionLifetime = this.proxyHandlerOptions.PooledConnectionLifetime,
+            PooledConnectionIdleTimeout = this.proxyHandlerOptions.PooledConnectionIdleTimeout,
             UseCookies = false,
-            AutomaticDecompression = DecompressionMethods.All
+            AutomaticDecompression = this.proxyHandlerOptions.AutomaticDecompression,
+            SslOptions = CreateSslOptions(
+                this.proxyHandlerOptions.EnabledSslProtocols,
+                this.proxyHandlerOptions.IgnoreCertificateValidationErrors
+            ),
+            ConnectTimeout = this.proxyHandlerOptions.ConnectTimeout
         };
 
         HttpClient client = new HttpClient(handler)
@@ -79,20 +140,16 @@ public class HttpClientFactory : IHttpClientFactory
         return client;
     }
 
-    protected virtual HttpClient CreateClient()
+    protected virtual SslClientAuthenticationOptions CreateSslOptions(
+        SslProtocols sslProtocols,
+        bool ignoreCertificateValidationErrors)
     {
-        HttpMessageHandler handler = new SocketsHttpHandler
+        return new SslClientAuthenticationOptions
         {
-            PooledConnectionLifetime = TimeSpan.FromMinutes(10),
-            UseCookies = false,
-            AutomaticDecompression = DecompressionMethods.All
+            EnabledSslProtocols = sslProtocols,
+            RemoteCertificateValidationCallback = ignoreCertificateValidationErrors
+                ? (sender, certificate, chain, errors) => true
+                : null
         };
-
-        HttpClient client = new HttpClient(handler)
-        {
-            Timeout = Timeout.InfiniteTimeSpan
-        };
-
-        return client;
     }
 }
