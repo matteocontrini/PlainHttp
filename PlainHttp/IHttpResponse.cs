@@ -50,12 +50,10 @@ public interface IHttpResponse : IDisposable
     Task<T?> ReadJson<T>(JsonSerializerOptions? options = null);
 
     /// <summary>
-    /// Downloads the response body to the given path and disposes the response.
+    /// Reads and deserializes the response body as XML and disposes the response.
     /// </summary>
-    /// <param name="path">The path to download the file to.</param>
-    /// <returns>A Task whose result is the path to the downloaded file.</returns>
-    Task<string> DownloadFile(string path);
-
+    /// <typeparam name="T">A type whose structure matches the expected XML response.</typeparam>
+    /// <returns>A Task whose result is an object containing data in the response body.</returns>
     Task<T?> ReadXml<T>(XmlReaderSettings? settings = null);
 
     /// <summary>
@@ -63,4 +61,11 @@ public interface IHttpResponse : IDisposable
     /// </summary>
     /// <returns>A Task whose result is the response body as a byte array.</returns>
     Task<byte[]> ReadBytes();
+    
+    /// <summary>
+    /// Downloads the response body to the given path and disposes the response.
+    /// </summary>
+    /// <param name="path">The path to download the file to.</param>
+    /// <returns>A Task whose result is the path to the downloaded file.</returns>
+    Task<string> DownloadFile(string path);
 }
