@@ -6,12 +6,13 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <VersionPrefix>2.0.0-pre1</VersionPrefix>
-        <Description>Easy HTTP client with support for serialization, proxies, testing and more </Description>
+        <Description>Easy HTTP client with support for serialization, deserialization, proxies, testing and more.</Description>
         <RepositoryUrl>https://github.com/matteocontrini/PlainHttp</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageTags>http;httpclient;proxy</PackageTags>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/matteocontrini/PlainHttp</PackageProjectUrl>
+        <PackageReleaseNotes>Release notes are published on GitHub: https://github.com/matteocontrini/PlainHttp/releases</PackageReleaseNotes>
     </PropertyGroup>
 
     <ItemGroup>
