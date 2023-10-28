@@ -19,11 +19,34 @@ public class HttpClientFactory : IHttpClientFactory
 
     public record HttpHandlerOptions
     {
+        /// <summary>
+        /// The maximum lifetime of a connection in the pool. Default: 10 minutes.
+        /// </summary>
         public TimeSpan PooledConnectionLifetime { get; init; } = TimeSpan.FromMinutes(10);
+
+        /// <summary>
+        /// The maximum idle time of a connection in the pool. If a connection is idle for more than this time, it will be closed. Default: 1 minute.
+        /// </summary>
         public TimeSpan PooledConnectionIdleTimeout { get; init; } = TimeSpan.FromMinutes(1);
+
+        /// <summary>
+        /// The timeout for establishing a connection to the server. Default: infinite.
+        /// </summary>
         public TimeSpan ConnectTimeout { get; init; } = Timeout.InfiniteTimeSpan;
+
+        /// <summary>
+        /// The decompression methods to use for the response body. By default, all methods (gzip, DEFLATE and Brotli) are enabled.
+        /// </summary>
         public DecompressionMethods AutomaticDecompression { get; init; } = DecompressionMethods.All;
+
+        /// <summary>
+        /// The SSL/TLS protocols to use. By default, the system default is used.
+        /// </summary>
         public SslProtocols EnabledSslProtocols { get; init; } = SslProtocols.None;
+
+        /// <summary>
+        /// Whether to ignore certificate validation errors. Default: false.
+        /// </summary>
         public bool IgnoreCertificateValidationErrors { get; init; }
     }
 
@@ -58,10 +81,10 @@ public class HttpClientFactory : IHttpClientFactory
     /// <summary>
     /// Gets a cached client with the given proxy attached to it.
     /// </summary>
-    /// <param name="uri">Request <see cref="Uri"/></param>
+    /// <param name="requestUri">Request <see cref="Uri"/></param>
     /// <param name="proxyUri"><see cref="Uri"/> of the proxy, used as the cache key</param>
     /// <returns>A cached <see cref="HttpClient"/> instance with the proxy configured</returns>
-    public HttpClient GetProxiedClient(Uri uri, Uri proxyUri)
+    public HttpClient GetProxiedClient(Uri requestUri, Uri proxyUri)
     {
         return ProxiedClientFromCache(proxyUri);
     }
