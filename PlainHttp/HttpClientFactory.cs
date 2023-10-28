@@ -36,7 +36,7 @@ public class HttpClientFactory : IHttpClientFactory
     public HttpClientFactory(HttpHandlerOptions handlerOptions)
     {
         this.handlerOptions = handlerOptions;
-        this.proxyHandlerOptions = new HttpHandlerOptions();
+        this.proxyHandlerOptions = handlerOptions;
     }
 
     public HttpClientFactory(HttpHandlerOptions handlerOptions, HttpHandlerOptions proxyHandlerOptions)
