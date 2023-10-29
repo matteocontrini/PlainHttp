@@ -103,10 +103,10 @@ public class HttpRequest : IHttpRequest
             // Covers both TaskCanceledException and OperationCanceledException
             if (ex is OperationCanceledException && !cancellationToken.IsCancellationRequested)
             {
-                throw new HttpRequestTimeoutException(this, ex);
+                throw new HttpRequestTimeoutException(this, stopwatch.Elapsed, ex);
             }
 
-            throw new HttpRequestException(this, ex);
+            throw new HttpRequestException(this, stopwatch.Elapsed, ex);
         }
     }
 

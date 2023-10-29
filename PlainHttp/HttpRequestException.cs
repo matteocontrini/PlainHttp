@@ -2,17 +2,27 @@
 
 public class HttpRequestException : Exception
 {
-    public HttpRequestException(HttpRequest request, Exception innerException)
+    public IHttpRequest Request { get; }
+    public IHttpResponse? Response { get; }
+
+    private readonly TimeSpan elapsedTime;
+    public TimeSpan ElapsedTime => Response?.ElapsedTime ?? elapsedTime;
+
+    public HttpRequestException(IHttpRequest request, TimeSpan elapsedTime, Exception innerException)
         : base(CreateMessage(request, innerException), innerException)
     {
+        this.Request = request;
+        this.elapsedTime = elapsedTime;
     }
 
-    public HttpRequestException(string message, Exception innerException)
-        : base(message, innerException)
+    public HttpRequestException(IHttpRequest request, IHttpResponse response, Exception innerException)
+        : base(CreateMessage(request, innerException), innerException)
     {
+        this.Request = request;
+        this.Response = response;
     }
 
-    private static string CreateMessage(HttpRequest request, Exception innerException)
+    private static string CreateMessage(IHttpRequest request, Exception innerException)
     {
         return $"Failed request: [{request.ToString()}] [{innerException.Message}]";
     }

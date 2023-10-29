@@ -2,13 +2,13 @@
 
 public class HttpRequestTimeoutException : HttpRequestException
 {
-    public HttpRequestTimeoutException(HttpRequest request, Exception innerException)
-        : base(CreateMessage(request, innerException), innerException)
+    public HttpRequestTimeoutException(IHttpRequest request, TimeSpan elapsedTime, Exception innerException)
+        : base(request, elapsedTime, innerException)
     {
     }
 
-    private static string CreateMessage(HttpRequest request, Exception innerException)
+    public HttpRequestTimeoutException(IHttpRequest request, IHttpResponse response, Exception innerException)
+        : base(request, response, innerException)
     {
-        return $"Failed request: [{request.ToString()}] [{innerException.Message}]";
     }
 }

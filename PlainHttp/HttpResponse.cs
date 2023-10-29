@@ -58,10 +58,10 @@ public class HttpResponse : IHttpResponse
         {
             if (ex is TimeoutException)
             {
-                throw new HttpRequestTimeoutException(this.Request, ex);
+                throw new HttpRequestTimeoutException(this.Request, this, ex);
             }
 
-            throw new HttpRequestException(this.Request, ex);
+            throw new HttpRequestException(this.Request, this, ex);
         }
         finally
         {
@@ -196,7 +196,7 @@ public class HttpResponse : IHttpResponse
         }
         catch (System.Net.Http.HttpRequestException ex)
         {
-            throw new HttpRequestException(this.Request, ex);
+            throw new HttpRequestException(this.Request, this, ex);
         }
     }
 
