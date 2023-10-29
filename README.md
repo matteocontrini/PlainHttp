@@ -301,7 +301,7 @@ Console.WriteLine($"Reading the headers+body took {response.ElapsedMilliseconds}
 
 The exception is if you use the `ReadStream` method: in that case PlainHttp cannot enforce a timeout when reading from that stream outside the library.
 
-You also must take care of disposing the response manually when using `ReadStream`:
+You also must take care of disposing the response manually when using `ReadStream` or if you don't read the response body at all:
 
 ```csharp
 IHttpRequest request = new HttpRequest(url)
@@ -312,14 +312,15 @@ IHttpRequest request = new HttpRequest(url)
 };
 
 // You MUST dispose the response manually
-// when using HttpCompletionOption.ResponseHeadersRead and ReadStream()
+// when using HttpCompletionOption.ResponseHeadersRead and ReadStream(),
+// or if you don't read the response body at all
 using IHttpResponse response = await request.SendAsync();
 
 Stream stream = await response.ReadStream();
 // The timeout is not enforced if you read from `stream` here
 ```
 
-In all other cases (any other `Read*` method), responses are **always disposed automatically** after reading the response body.
+In all other cases (any other `Read*` method), responses are **always disposed automatically** after reading the response body, also in case of errors.
 
 A note on XML deserialization: the `ReadXml` method uses `XmlSerializer`, which is not asynchronous. Therefore, the response body is unfortunately always fully read in memory (asynchronously) before deserializing it, no matter the `HttpCompletionOption` setting.
 
