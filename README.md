@@ -210,6 +210,8 @@ IHttpRequest request = new HttpRequest(url)
 
 You can pass XML serialization options with the second argument of `XmlPayload` (`XmlWriterSettings`). If you already have an XML-serialized string, just pass it directly.
 
+Note that the `XmlPayload` implementation will use the `UTF-8` encoding, which is normally not the default in .NET. If you have different requirements you should pass an already-serialized string or implement a [custom payload type](#custom-serialization).
+
 `POST` request with **plain text payload**:
 
 ```c#

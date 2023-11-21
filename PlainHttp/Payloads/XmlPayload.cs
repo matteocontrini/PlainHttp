@@ -31,14 +31,12 @@ public class XmlPayload : IPayload
         else
         {
             XmlSerializer serializer = new XmlSerializer(this.payload.GetType());
-            StringBuilder result = new StringBuilder();
 
-            using (var writer = XmlWriter.Create(result, this.settings))
-            {
-                serializer.Serialize(writer, this.payload);
-            }
+            using var stringWriter = new Utf8StringWriter();
+            using var xmlWriter = XmlWriter.Create(stringWriter, this.settings);
 
-            serialized = result.ToString();
+            serializer.Serialize(xmlWriter, this.payload);
+            serialized = stringWriter.ToString();
         }
 
         return new StringContent(
@@ -46,5 +44,10 @@ public class XmlPayload : IPayload
             encoding: Encoding.UTF8,
             mediaType: "text/xml"
         );
+    }
+
+    private class Utf8StringWriter : StringWriter
+    {
+        public override Encoding Encoding => Encoding.UTF8;
     }
 }
