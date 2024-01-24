@@ -21,7 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Flurl" Version="3.0.7" />
+        <PackageReference Include="Flurl" Version="4.0.0" />
     </ItemGroup>
 
 </Project>
