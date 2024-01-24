@@ -28,7 +28,7 @@ In particular, the library keeps:
 - One `HttpClient` per request host
 - One `HttpClient` per proxy URI (including credentials)
 
-There is currently no mechanism that disposes `HttpClient` instances that are unused, so if you use a lot of random proxies or many different hostnames, you might get into trouble. This can be easily improved by creating a custom [`IHttpClientFactory`](https://github.com/matteocontrini/PlainHttp/blob/master/PlainHttp/HttpClientFactory.cs), and then setting the factory instance to the static `HttpClientFactory` property.
+There is currently no mechanism that disposes `HttpClient` instances that are unused, so if you use a lot of random proxies or many different hostnames, you might get into trouble. See [Custom `HttpClientFactory`](#custom-httpclientfactory) for instructions on how to override the default behavior.
 
 ## Installation
 
@@ -497,3 +497,13 @@ The meanings of these options (which usually map to `SocketsHttpHandler` propert
 - `IgnoreCertificateValidationErrors`: whether to ignore certificate validation errors.
 
 Note that when applied to proxied clients these options will apply to the connection to the proxy server itself. 
+
+### Custom `HttpClientFactory`
+
+If the above options aren't enough or you want more control, you can create your own factory implementation and set it to the static `HttpClientFactory` property:
+
+```c#
+HttpRequest.HttpClientFactory = new MyHttpClientFactory();
+```
+
+The custom factory must implement the [`IHttpClientFactory`](https://github.com/matteocontrini/PlainHttp/blob/main/PlainHttp/IHttpClientFactory.cs) interface. The default factory implementation can be found [here](https://github.com/matteocontrini/PlainHttp/blob/main/PlainHttp/HttpClientFactory.cs).
