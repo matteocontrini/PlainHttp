@@ -1,123 +1,207 @@
-﻿using System;
-using System.Diagnostics;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
+using System.Net;
+using System.Text;
+using System.Text.Json;
+using System.Xml;
+using System.Xml.Serialization;
 
-namespace PlainHttp
+namespace PlainHttp;
+
+public class HttpResponse : IHttpResponse
 {
-    /// <summary>
-    /// Wraps the HTTP response information
-    /// </summary>
-    public class HttpResponse : IHttpResponse, IDisposable
+    public HttpRequest Request { get; init; }
+    public HttpResponseMessage Message { get; init; }
+    public bool Succeeded => this.Message.IsSuccessStatusCode;
+    public HttpStatusCode StatusCode => this.Message.StatusCode;
+    public TimeSpan ElapsedTime { get; internal set; }
+
+    public HttpResponse(HttpRequest request, HttpResponseMessage message)
     {
-        public HttpResponseMessage Message { get; set; }
+        this.Request = request;
+        this.Message = message;
+    }
 
-        public string Body { get; set; }
-
-        public HttpRequest Request { get; set; }
-
-        public bool Succeeded
+    public string? GetSingleHeader(string name)
+    {
+        if (this.Message.Headers.TryGetValues(name, out var values) ||
+            this.Message.Content.Headers.TryGetValues(name, out values))
         {
-            get
-            {
-                return this.Message.IsSuccessStatusCode;
-            }
+            return values.FirstOrDefault();
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    private async Task<T> ReadWrapper<T>(Func<TimeSpan, Task<T>> readFunc)
+    {
+        Stopwatch? stopwatch = null;
+        TimeSpan timeLeft = default;
+
+        if (this.Request.HttpCompletionOption == HttpCompletionOption.ResponseHeadersRead)
+        {
+            // Calculate how much time we have left until the timeout
+            timeLeft = this.Request.Timeout != Timeout.InfiniteTimeSpan
+                ? this.Request.Timeout - this.ElapsedTime
+                : Timeout.InfiniteTimeSpan;
+
+            // Start measuring how long the read will last
+            stopwatch = Stopwatch.StartNew();
         }
 
-        public TimeSpan ElapsedTime { get; set; }
-
-        public HttpResponse(HttpRequest request, HttpResponseMessage message)
+        try
         {
-            this.Request = request;
-            this.Message = message;
+            return await readFunc(timeLeft).ConfigureAwait(false);
         }
-
-        public HttpResponse(HttpRequest request, HttpResponseMessage message, string body)
-            : this(request, message)
+        catch (Exception ex)
         {
-            this.Request = request;
-            this.Message = message;
-            this.Body = body;
-        }
-
-        public string GetSingleHeader(string name)
-        {
-            if (this.Message.Headers.TryGetValues(name, out var values) ||
-                this.Message.Content.Headers.TryGetValues(name, out values))
+            if (ex is TimeoutException)
             {
-                return values.FirstOrDefault();
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        public async Task ReadBody()
-        {
-            if (Body != null)
-            {
-                return;
+                throw new HttpRequestTimeoutException(this.Request, this, ex);
             }
 
-            Stopwatch stopwatch = null;
-            TimeSpan newTimeout = default;
-
-            // If the HttpCompletionOption is set to ResponseHeadersRead,
-            // this method is being called in a second moment, so ElapsedTime is already populated
-            if (this.ElapsedTime != default)
+            throw new HttpRequestException(this.Request, this, ex);
+        }
+        finally
+        {
+            if (stopwatch != null)
             {
-                // Start a stopwatch to measure how long the read will last
-                stopwatch = Stopwatch.StartNew();
-                
-                if (this.Request.Timeout != default)
+                this.ElapsedTime += stopwatch.Elapsed;
+            }
+
+            Dispose();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<Stream> ReadStream()
+    {
+        return await this.Message.Content
+            .ReadAsStreamAsync()
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<string> ReadString()
+    {
+        return await ReadWrapper(timeLeft =>
+            this.Message.Content
+                .ReadAsStringAsync()
+                .WaitAsync(timeLeft)
+        ).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<string> ReadString(Encoding encoding)
+    {
+        return await ReadWrapper(async timeLeft =>
+            {
+                byte[] array = await this.Message.Content.ReadAsByteArrayAsync()
+                    .WaitAsync(timeLeft)
+                    .ConfigureAwait(false);
+
+                return encoding.GetString(array);
+            }
+        ).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<T?> ReadJson<T>(JsonSerializerOptions? options = null)
+    {
+        return await ReadWrapper(async timeLeft =>
+            {
+                await using Stream stream = await this.Message.Content
+                    .ReadAsStreamAsync()
+                    .ConfigureAwait(false);
+
+                if (this.Request.HttpCompletionOption == HttpCompletionOption.ResponseHeadersRead)
                 {
-                    // Calculate how much time we have left
-                    newTimeout = this.Request.Timeout - this.ElapsedTime;
-                }
-            }
-
-            try
-            {
-                if (this.Request.ResponseEncoding != null)
-                {
-                    byte[] array = await this.Message.Content.ReadAsByteArrayAsync()
-                        .WithTimeout(newTimeout)
+                    // Use async variant since the deserializer will do the actual read
+                    // from the network, through the stream
+                    return await JsonSerializer.DeserializeAsync<T>(stream, options)
+                        .AsTask()
+                        .WaitAsync(timeLeft)
                         .ConfigureAwait(false);
-
-                    this.Body = this.Request.ResponseEncoding.GetString(array);
                 }
                 else
                 {
-                    this.Body = await this.Message.Content.ReadAsStringAsync()
-                        .WithTimeout(newTimeout)
-                        .ConfigureAwait(false);
+                    // The stream is a fully-read MemoryStream, so we can use the sync variant
+                    // (it would be sync even if we used the async variant)
+                    // https://github.com/dotnet/runtime/issues/1574#issuecomment-535324331
+                    return JsonSerializer.Deserialize<T>(stream, options);
                 }
             }
-            catch (Exception ex)
-            {
-                if (ex is OperationCanceledException)
-                {
-                    throw new HttpRequestTimeoutException(this.Request, ex);
-                }
+        ).ConfigureAwait(false);
+    }
 
-                throw new HttpRequestException(this.Request, ex);
-            }
-            finally
-            {
-                if (stopwatch != null)
-                {
-                    this.ElapsedTime += stopwatch.Elapsed;
-                }
-
-                Dispose();
-            }
-        }
-
-        public void Dispose()
+    /// <inheritdoc />
+    public async Task<T?> ReadXml<T>(XmlReaderSettings? settings = null)
+    {
+        return await ReadWrapper(async timeLeft =>
         {
-            this.Message.Dispose();
+            await using Stream stream = await this.Message.Content
+                .ReadAsStreamAsync()
+                .ConfigureAwait(false);
+
+            // Since the stream read+deserialization can only happen synchronously due to XmlSerializer,
+            // we first read the whole response in memory asynchronously, then deserialize it synchronously.
+            // If the response was already a MemoryStream, this will do nothing.
+            // If the response was still being read from the network, this will at least not block the thread.
+            await using MemoryStream memoryStream = await StreamHelper.ConvertToMemoryStream(stream)
+                .WaitAsync(timeLeft)
+                .ConfigureAwait(false);
+
+            var reader = XmlReader.Create(memoryStream, settings);
+            var serializer = new XmlSerializer(typeof(T));
+            return (T?)serializer.Deserialize(reader);
+        }).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<string> DownloadFile(string path)
+    {
+        return await ReadWrapper(async timeLeft =>
+        {
+            await using Stream stream = await this.Message.Content
+                .ReadAsStreamAsync()
+                .ConfigureAwait(false);
+
+            await using FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write);
+
+            await stream.CopyToAsync(fs)
+                .WaitAsync(timeLeft)
+                .ConfigureAwait(false);
+
+            return path;
+        }).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<byte[]> ReadBytes()
+    {
+        return await ReadWrapper(timeLeft =>
+            this.Message.Content
+                .ReadAsByteArrayAsync()
+                .WaitAsync(timeLeft)
+        ).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public void EnsureSuccessStatusCode()
+    {
+        try
+        {
+            this.Message.EnsureSuccessStatusCode();
         }
+        catch (System.Net.Http.HttpRequestException ex)
+        {
+            throw new HttpRequestException(this.Request, this, ex);
+        }
+    }
+
+    public void Dispose()
+    {
+        this.Message.Dispose();
     }
 }

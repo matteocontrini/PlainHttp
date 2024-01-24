@@ -1,15 +1,11 @@
-﻿using System.Collections.Generic;
-using System.Net.Http;
+﻿namespace PlainHttp;
 
-namespace PlainHttp
+public class TestingMode
 {
-    public class TestingMode
-    {
-        public Queue<HttpResponseMessage> RequestsQueue { get; set; }
+    public Queue<HttpResponseMessage> RequestsQueue { get; set; }
 
-        public TestingMode()
-        {
-            this.RequestsQueue = new Queue<HttpResponseMessage>();
-        }
+    public TestingMode()
+    {
+        this.RequestsQueue = new Queue<HttpResponseMessage>();
     }
 }
