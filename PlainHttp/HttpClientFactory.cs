@@ -48,6 +48,11 @@ public class HttpClientFactory : IHttpClientFactory
         /// Whether to ignore certificate validation errors. Default: false.
         /// </summary>
         public bool IgnoreCertificateValidationErrors { get; init; }
+
+        /// <summary>
+        /// Whether redirect responses should be automatically followed. Default: true.
+        /// </summary>
+        public bool AllowAutoRedirect { get; set; } = true;
     }
 
     public HttpClientFactory()
@@ -119,7 +124,8 @@ public class HttpClientFactory : IHttpClientFactory
                 this.handlerOptions.EnabledSslProtocols,
                 this.handlerOptions.IgnoreCertificateValidationErrors
             ),
-            ConnectTimeout = this.handlerOptions.ConnectTimeout
+            ConnectTimeout = this.handlerOptions.ConnectTimeout,
+            AllowAutoRedirect = this.handlerOptions.AllowAutoRedirect,
         };
 
         HttpClient client = new HttpClient(handler)
@@ -152,7 +158,8 @@ public class HttpClientFactory : IHttpClientFactory
                 this.proxyHandlerOptions.EnabledSslProtocols,
                 this.proxyHandlerOptions.IgnoreCertificateValidationErrors
             ),
-            ConnectTimeout = this.proxyHandlerOptions.ConnectTimeout
+            ConnectTimeout = this.proxyHandlerOptions.ConnectTimeout,
+            AllowAutoRedirect = this.proxyHandlerOptions.AllowAutoRedirect,
         };
 
         HttpClient client = new HttpClient(handler)

@@ -484,6 +484,7 @@ public record HttpHandlerOptions
     public DecompressionMethods AutomaticDecompression { get; init; } = DecompressionMethods.All;
     public SslProtocols EnabledSslProtocols { get; init; } = SslProtocols.None;
     public bool IgnoreCertificateValidationErrors { get; init; }
+    public bool AllowAutoRedirect { get; set; } = true;
 }
 ```
 
@@ -495,6 +496,7 @@ The meanings of these options (which usually map to `SocketsHttpHandler` propert
 - `AutomaticDecompression`: the decompression methods to use for the response body. By default, all methods (gzip, DEFLATE and Brotli) are enabled.
 - `EnabledSslProtocols`: the SSL/TLS protocols to use. By default, the system default is used.
 - `IgnoreCertificateValidationErrors`: whether to ignore certificate validation errors.
+- `AllowAutoRedirect`: whether redirect responses should be automatically followed. By default, redirects are followed.
 
 Note that when applied to proxied clients these options will apply to the connection to the proxy server itself. 
 
